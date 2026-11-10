@@ -95,6 +95,7 @@ function kitchenMain(c, t, s) {
   // counter
   rr(c, -3080, 230, 1150, 240, 12); ink(c, '#7bc8a8', 8); rr(c, -3100, 200, 1190, 46, 14); ink(c, '#f2e0c4', 8);
   for (let i = 0; i < 4; i++) { rr(c, -3050 + i * 285, 270, 255, 180, 12); ink(c, '#8fd6b8', 6); circ(c, -2930 + i * 285, 360, 9); ink(c, '#ffcf3a', 4); }
+  if (!s.noKettle) {
   // kettle with steam
   const kx = -2850, ky = 200;
   c.beginPath(); c.moveTo(kx - 80, ky); c.quadraticCurveTo(kx - 100, ky - 150, kx, ky - 160); c.quadraticCurveTo(kx + 100, ky - 150, kx + 80, ky); c.closePath(); ink(c, '#ff7b6b', 8);
@@ -102,6 +103,7 @@ function kitchenMain(c, t, s) {
   c.beginPath(); c.arc(kx, ky - 160, 50, Math.PI * 1.1, Math.PI * 1.9); c.lineWidth = 12; c.strokeStyle = INK; c.stroke();
   const st = s.steam != null ? s.steam : 1;
   for (let i = 0; i < 6; i++) { const k = (t * .8 + i / 6) % 1; c.save(); c.globalAlpha = st * .8 * Math.sin(Math.PI * k); circ(c, kx + 160 + k * 60 + Math.sin(k * 7 + i) * 26, ky - 150 - k * 260, 20 + k * 40); c.fillStyle = '#fff'; c.fill(); c.restore(); }
+  }
   // toaster
   const tx = -2420, ty = 200, pop = s.toastPop || 0;
   // toast slices
@@ -135,8 +137,8 @@ function streetFloor(c) { c.fillStyle = '#5a5f73'; c.fillRect(-9000, 330, 5400, 
   c.fillStyle = '#fff'; for (let x = -9000; x < -3600; x += 260) c.fillRect(x, 392, 130, 12); }
 function busStop(c) { const x = SX + 250; rr(c, x - 10, -380, 20, 850, 8); ink(c, '#9aa3b8', 6); circ(c, x, -420, 80); ink(c, '#3ad07a', 8); txt(c, 'А', x, -392, 80, { fill: '#fff', shadow: false, lw: 10 });
   rr(c, x + 70, 300, 300, 30, 10); ink(c, '#c4844f', 6); [x + 100, x + 340].forEach(lx => { rr(c, lx - 8, 330, 16, 140, 6); ink(c, '#9aa3b8', 5); }); }
-function bus(c, bx, t, doors, moving) {
-  c.save(); c.translate(bx, 0);
+function bus(c, bx, t, doors, moving, dy = 0, rot = 0) {
+  c.save(); c.translate(bx, dy); c.rotate(rot);
   const bob = moving ? Math.sin(t * 30) * 3 : 0; c.translate(0, bob);
   rr(c, -520, -330, 1040, 690, [80, 60, 30, 30]); ink(c, '#ffb321', 9);
   rr(c, -520, 170, 1040, 70, 0); c.fillStyle = '#ff8a21'; c.fill(); rr(c, -520, -330, 1040, 690, [80, 60, 30, 30]); ink(c, null, 9);
@@ -156,20 +158,21 @@ function seen(z, x0, x1) { const s = layerScale(z), half = (W * .8) / s; return 
 function world(t, s) {
   if (seen(1500, -9000, DOOR2 + 200)) layer(1500, c => streetFar(c, t));
   layer(400, c => {
-    if (seen(400, DOOR1, 3000)) { c.save(); c.beginPath(); c.rect(DOOR1, -4000, 6000, 8000); c.clip(); bedroomWall(c, s.tod, t); curtains(c, s.curtain || 0, s.tod); if (s.sunRays) sunRays(c, s.sunRays, t); c.restore(); }
+    if (seen(400, DOOR1, 3000)) { c.save(); c.beginPath(); c.rect(DOOR1, -4000, 6000, 8000); c.clip(); bedroomWall(c, s.tod, t); curtains(c, s.curtain || 0, s.tod); if (s.sunRays) sunRays(c, s.sunRays, t); if (s.wallExtra) s.wallExtra(c); c.restore(); }
     if (seen(400, DOOR2, DOOR1)) kitchenWall(c, t);
     if (seen(400, -9000, DOOR2)) streetMid(c);
   });
   layer(180, c => { if (seen(180, DOOR1, 3000)) floor(c, s.tod); if (seen(180, DOOR2, DOOR1)) kitchenFloor(c); if (seen(180, -9000, DOOR2)) streetFloor(c); });
-  if (s.bus && seen(120, s.bus.x - 700, s.bus.x + 700)) layer(120, c => bus(c, s.bus.x, t, s.bus.doors, s.bus.moving));
+  if (s.bus && seen(120, s.bus.x - 700, s.bus.x + 700)) layer(120, c => bus(c, s.bus.x, t, s.bus.doors, s.bus.moving, s.bus.dy || 0, s.bus.rot || 0));
   layer(0, c => {
-    if (seen(0, -800, 800)) { nightstand(c, s.tod); bedBack(c, s.tod);
+    if (s.back) s.back(c);
+    if (seen(0, -800, 800) && !s.noBed) { c.save(); if (s.bedXf) { c.translate(0, s.bedXf.dy); c.translate(0, 300); c.rotate(s.bedXf.rot); c.translate(0, -300); } nightstand(c, s.tod); bedBack(c, s.tod);
       if (s.temaInBed) tema(c, Object.assign({ x: -350, y: 330, rot: -.22, s: .92, noLegs: true, armBack: false, armFront: false, t }, s.temaInBed));
       if (s.blanketLift == null || s.blanketLift < 1) blanket(c, s.tod, s.bump || 0, t, s.blanketLift || 0);
       if (s.dzyn) dzyn(c, Object.assign({ x: CLOCK.x, y: CLOCK.y, t }, s.dzyn));
-      if (s.arm) reachArm(c, s.arm.from, s.arm.hand, s.arm.mode, t); }
+      if (s.arm) reachArm(c, s.arm.from, s.arm.hand, s.arm.mode, t); c.restore(); }
     if (seen(0, DOOR2, DOOR1)) kitchenMain(c, t, s.kitchen || {});
-    if (seen(0, -9000, DOOR2)) busStop(c);
+    if (seen(0, -9000, DOOR2) && !s.noBusStop) busStop(c);
     if (seen(0, DOOR1 - 200, DOOR1 + 200)) pillar(c, DOOR1, 'wall');
     if (seen(0, DOOR2 - 200, DOOR2 + 200)) pillar(c, DOOR2, 'brick');
     if (s.extra) s.extra(c);

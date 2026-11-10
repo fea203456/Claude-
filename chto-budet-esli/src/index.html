@@ -11,10 +11,10 @@ html,body{margin:0;background:#111}canvas{display:block;height:100vh;margin:auto
 <script src="lib.js"></script><script src="scenes.js"></script><script src="cues.js"></script>
 <script>
 const q = new URLSearchParams(location.search), PN = q.get('part') || '1';
-const s = document.createElement('script'); s.src = 'part' + PN + '.js';
+const s = document.createElement('script'); s.src = PN[0] === 'f' ? 'flood.js' : 'part' + PN + '.js';
 window.ready = new Promise(res => { s.onload = async () => {
   await Promise.all(['900 80px Rubik','800 80px Rubik','80px Pangolin'].map(f => document.fonts.load(f, 'Аа0')));
-  PART = window['PART' + PN]; res();
+  PART = PN[0] === 'f' ? window.FLOOD[PN] : window['PART' + PN]; res();
   if (!q.has('render')) { const t0 = performance.now(); const loop = () => { const t = ((performance.now() - t0) / 1000) % PART.dur; renderAt(t, 1); requestAnimationFrame(loop); }; loop(); }
 }; });
 document.body.appendChild(s);
