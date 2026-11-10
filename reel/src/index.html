@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><title>День 1 из 30</title>
+<style>
+@font-face{font-family:Unbounded;font-weight:700;src:url(fonts/unbounded-cyrillic-700-normal.woff2) format('woff2');unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116}
+@font-face{font-family:Unbounded;font-weight:700;src:url(fonts/unbounded-latin-700-normal.woff2) format('woff2');unicode-range:U+0000-00FF,U+2000-206F,U+20AC,U+20BD}
+@font-face{font-family:Unbounded;font-weight:900;src:url(fonts/unbounded-cyrillic-900-normal.woff2) format('woff2');unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116}
+@font-face{font-family:Unbounded;font-weight:900;src:url(fonts/unbounded-latin-900-normal.woff2) format('woff2');unicode-range:U+0000-00FF,U+2000-206F,U+20AC,U+20BD}
+html,body{margin:0;background:#0c0714;height:100%;display:flex;align-items:center;justify-content:center}
+canvas{height:100vh;aspect-ratio:9/16;max-width:100vw}
+</style></head><body>
+<canvas id="c" width="1080" height="1920"></canvas>
+<script src="timeline.js"></script><script src="voice.js"></script><script src="anim.js"></script>
+<script>
+// Preview: plays the timeline in real time (with ../out/mix.wav if present). Export uses tools/render.js.
+if (!/render/.test(location.search)) window.ready.then(() => {
+  const a = new Audio('../out/mix.wav'); let t0 = performance.now();
+  a.play().catch(() => {}); const tick = () => { const t = a.currentTime > 0 && !a.paused ? a.currentTime : ((performance.now() - t0) / 1000) % TL.dur; renderAt(t, 1); requestAnimationFrame(tick); }; tick();
+});
+</script></body></html>

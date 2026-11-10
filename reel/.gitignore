@@ -1,0 +1,4 @@
+build/
+out/draft*.mp4
+out/mix.wav
+voice/*.src.wav
