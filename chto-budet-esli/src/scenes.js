@@ -53,12 +53,14 @@ function choiceSplit(c, k, t, hl) {
   c.save(); c.beginPath(); const n = 18; for (let i = 0; i <= n; i++) { const x = W * i / n, y = lerp(yl, yr, i / n) + (i % 2 ? 16 : -16) * k; i ? c.lineTo(x, y) : c.moveTo(x, y); }
   c.lineWidth = 22; c.strokeStyle = '#fff'; c.stroke(); c.lineWidth = 8; c.strokeStyle = INK; c.stroke(); c.restore();
 }
-function choicePlate(c, letter, label, x, y, t, t0, col, sub) {
+function choicePlate(c, letter, label, x, y, t, t0, col, sub, pulse = 0) {
+  c.save(); c.translate(x, y); c.scale(1 + pulse * .12, 1 + pulse * .12); c.rotate(Math.sin(t * 2.2 + x) * .012); c.translate(-x, -y);
   plate(c, x, y, 560, 190, t, t0, { fill: '#fff', rot: letter === 'А' ? -.05 : .05, draw: (c, lt) => {
     circ(c, -190, 0, 70); ink(c, col, 8); txt(c, letter, -190, 36, 104, { fill: '#fff', shadow: false, lw: 14 });
     txt(c, label, 80, sub ? -2 : 26, 66, { fill: col, lw: 10, shadow: false });
     if (sub) txt(c, sub, 80, 62, 50, { fill: col, lw: 8, shadow: false });
   } });
+  c.restore();
 }
 function tapFinger(c, x, y, press) {
   c.save(); c.translate(x, y + press * 18); c.rotate(-.35); c.scale(1 - press * .08, 1 - press * .08);
@@ -177,3 +179,12 @@ function world(t, s) {
 }
 // horizontal whip smear of the current frame (k in px)
 function whip(k) { if (k < 1) return; screen(c => { tctx.setTransform(1, 0, 0, 1, 0, 0); tctx.drawImage(frameC, 0, 0); const n = 8; for (let i = 0; i < n; i++) { c.globalAlpha = 1 / (i + 2); c.drawImage(tmpC, (i / (n - 1) - .5) * k, 0); } c.globalAlpha = 1; }); }
+
+// decorative icons for the choice zones (screen space)
+function sunIcon(c, x, y, r, t, k) { if (k <= 0) return; c.save(); c.translate(x, y); c.scale(k, k); c.rotate(t * .5);
+  for (let i = 0; i < 10; i++) { c.save(); c.rotate(i * Math.PI / 5); c.beginPath(); c.moveTo(-r * .16, -r * 1.25); c.lineTo(0, -r * (1.7 + .12 * Math.sin(t * 4 + i))); c.lineTo(r * .16, -r * 1.25); c.closePath(); ink(c, '#ffe15a', 6); c.restore(); }
+  circ(c, 0, 0, r); ink(c, '#ffe15a', 8); c.rotate(-t * .5); c.lineWidth = 7; c.strokeStyle = INK; c.lineCap = 'round';
+  [-1, 1].forEach(sd => { c.beginPath(); c.arc(sd * r * .36, -r * .1, r * .14, Math.PI * 1.1, Math.PI * 1.9); c.stroke(); }); c.beginPath(); c.arc(0, r * .15, r * .34, .15 * Math.PI, .85 * Math.PI); c.stroke(); c.restore(); }
+function moonIcon(c, x, y, r, t, k) { if (k <= 0) return; c.save(); c.translate(x, y + Math.sin(t * 1.5) * 10); c.scale(k, k); c.rotate(-.3 + Math.sin(t * 1.1) * .05);
+  c.beginPath(); c.arc(0, 0, r, .6, Math.PI * 2 - .6); c.arc(r * .55, 0, r * .72, Math.PI * 2 - 1.05, 1.05, true); c.closePath(); ink(c, '#fff6c9', 8); c.restore();
+  zzz(c, x + r * .6, y - r * .4, t, k); }

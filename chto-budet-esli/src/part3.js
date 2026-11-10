@@ -8,10 +8,10 @@
   // Tema's run path (world x) after jumping out of bed
   const RUNK = [[C.out + .35, -250], [C.socks, -1050], [C.toastT, -1750], [C.door, -3450], [C.door + .5, -3950], [C.close, -4400], [C.busGo + .1, -4470], [C.stop, -5250], [DUR, -5260]];
   const runX = t => { if (t <= RUNK[0][0]) return RUNK[0][1]; for (let i = 0; i < RUNK.length - 1; i++) if (t < RUNK[i + 1][0]) { const k = (t - RUNK[i][0]) / (RUNK[i + 1][0] - RUNK[i][0]); return lerp(RUNK[i][1], RUNK[i + 1][1], i === RUNK.length - 3 ? eout(k) : k); } return RUNK[RUNK.length - 1][1]; };
-  const camKeys = [[0, 40, -170, 1560, -.008], [C.color + .4, 60, -60, 1330, 0], [C.lastRing, 70, -60, 1240, .01], [C.wake, 40, -40, 1150, 0],
+  const camKeys = [[0, 40, -170, 1560, -.008], [C.color + .4, 60, -60, 1330, 0], [3.6, 70, -50, 1220, .012], [C.lastRing, 70, -30, 1060, -.014], [C.wake, 60, -30, 1040, 0],
     [C.zoomLCD, 470, -30, 470, .04], [C.zoomLCD + .35, 470, -30, 450, .04], [C.shock, -360, -20, 600, -.03], [C.out - .2, -340, -20, 680, -.02], [C.out + .35, -300, 60, 1050, 0]];
   for (let tt = C.out + .7; tt < C.stop + .6; tt += .35) camKeys.push([tt, runX(tt + .15) - 120, 90, tt > C.door ? 1080 : 930, 0]);
-  camKeys.push([C.stop + 1.2, -5000, 60, 1300, 0], [C.end, -5100, 40, 1400, 0], [DUR, -5130, 30, 1460, -.006]);
+  camKeys.push([C.stop + 1.2, -5180, 120, 1080, 0], [C.end, -5220, 150, 1000, 0], [DUR, -5235, 150, 1040, -.006]);
   function render(t) {
     let [x, y, cz, rot] = keyed(camKeys, t);
     const k = nSlaps(t), lastSlap = k ? SL[k - 1] : -9, punch = Math.exp(-Math.max(0, t - lastSlap) * 9) * (t > lastSlap ? 1 : 0);

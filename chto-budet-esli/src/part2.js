@@ -38,7 +38,7 @@
       const wave = t > C.end + .4 ? Math.sin((t - C.end) * 8) : null;
       const catchK = smt(t, C.pop + .25, C.catch);
       temaStand = { x: px, y: 470, flip: false, run, look: t < C.pop ? [-.6, 0] : (t < C.catch ? [-.4, -.9 + catchK * .9] : [0, 0]), mouth: t > C.catch ? 'smile' : (t > C.pop ? 'o' : 'smile'), toast: t > C.catch, mouthOpen: .3 + munch * .4,
-        armL: t > C.pop ? [lerp(-125, -70, catchK), lerp(-40, -170, catchK)] : null, armR: wave != null ? [150, -360 + wave * 20] : null, lid: t > C.catch ? .35 : 0, sy: 1 + munch * .03, blush: .5, hair: .1 };
+        armL: t > C.pop ? [lerp(-125, -70, catchK), lerp(-40, -170, catchK)] : null, armR: wave != null ? [150, -360 + wave * 20] : null, lid: 0, brow: .4, sy: 1 + munch * .03 + (t > C.catch ? Math.abs(Math.sin(t * Math.PI * 2)) * .06 : 0), rot: t > C.catch ? Math.sin(t * Math.PI * 2) * .07 : 0, blush: .5, hair: .1 };
     }
     const toastFly = t > C.pop && t < C.catch;
     world(t, {
@@ -60,10 +60,10 @@
     greyFrame(grey);
     screen(c => {
       if (t < C.color + 1.2) { c.save(); c.globalAlpha = 1 - seg(t, C.color + .8, C.color + 1.2); stamp(c, 'ВАРИАНТ А', W / 2, 330, 104, t, C.stamp, '#ff9a1e'); c.restore(); }
-      plate(c, W / 2, 400, 760, 170, t, C.plate, { fill: '#fff', rot: -.03, out: C.end - .2, draw: c => { txt(c, '7:20', -220, 32, 92, { fill: '#ff9a1e', lw: 12, shadow: false }); txt(c, 'времени полно', 110, 24, 52, { font: FP(52), fill: INK, lw: 0, shadow: false }); } });
+      plate(c, W / 2, 400, 760, 170, t, C.plate, { fill: '#fff', rot: -.03, out: C.end - .2, draw: c => { txt(c, '7:20', -220, 32, 92, { fill: '#ff9a1e', lw: 12, shadow: false }); txt(c, 'времени полно', 120, 26, 62, { font: FP(62), fill: INK, lw: 0, shadow: false }); } });
       if (t > C.end) {
         stamp(c, 'ВАРИАНТ А', W / 2, 300, 96, t, C.end, '#ff9a1e');
-        dropText(c, 'спокойное утро', W / 2, 470, 78, t, C.end + .35, { font: FP(78), fill: '#fff', stagger: .03 });
+        plate(c, W / 2, 470, 620, 130, t, C.end + .35, { fill: '#fff', rot: .02, draw: c => txt(c, 'спокойное утро', 0, 22, 68, { font: FP(68), fill: INK, lw: 0, shadow: false }) });
         plate(c, W / 2, 1600, 880, 200, t, C.end + 1.2, { fill: '#fff', draw: c => {
           txt(c, 'А если выбрать Б?', 0, -16, 62, { fill: '#6b3df0', lw: 10, shadow: false });
           txt(c, 'Смотри часть 3  ▶', 0, 60, 50, { font: FP(50), fill: INK, lw: 0, shadow: false });

@@ -46,7 +46,7 @@
           [...'ДЗЫНЬ!'].forEach((ch, i) => txt(c, ch, -150 + i * 62 + Math.sin(tc * 70 + i) * 5, Math.cos(tc * 63 + i * 2) * 6, 84, { fill: i % 2 ? '#ffcf3a' : '#ff4d5e' }));
           c.restore();
         }
-        bubble(c, 170, -190, 460, 170, 'ммм… ещё чуть-чуть', tc, C.mmm, C.armHover - .2, 50, [-1, 1]);
+        bubble(c, 170, -190, 460, 170, 'ммм… ещё чуть-чуть', tc, C.mmm, C.armIn + 1.2, 50, [-1, 1]);
       }
     });
     // title in a near layer -> real parallax as the camera crash-zooms away
@@ -68,8 +68,11 @@
         if (t < C.split + .3) { c.save(); c.globalAlpha = 1 - seg(t, C.split, C.split + .3); stamp(c, 'СТОП!', W / 2, 830, 150, t, FREEZE + .05, '#ff4d5e'); c.restore(); }
         const hl = t > C.tapA && t < C.tapB ? 'A' : t > C.tapB && t < C.tapB + 1 ? 'B' : null;
         choiceSplit(c, seg(t, C.split, C.split + .45), t, hl);
-        choicePlate(c, 'А', 'ВСТАТЬ', 340, 560, t, C.split + .3, '#ff9a1e');
-        choicePlate(c, 'Б', 'ЕЩЁ', 740, 1290, t, C.split + .55, '#6b3df0', '5 МИНУТ');
+        const pA = Math.max(Math.exp(-Math.pow((t - C.tapA) / .12, 2)), Math.exp(-Math.pow((t - C.tapA2) / .12, 2))), pB = Math.exp(-Math.pow((t - C.tapB) / .12, 2));
+        sunIcon(c, 850, 500, 92, t, spring(t - C.split - .5, 12, 7));
+        moonIcon(c, 250, 1400, 84, t, spring(t - C.split - .7, 12, 7));
+        choicePlate(c, 'А', 'ВСТАТЬ', 340, 640, t, C.split + .3, '#ff9a1e', null, pA);
+        choicePlate(c, 'Б', 'ЕЩЁ', 740, 1250, t, C.split + .55, '#6b3df0', '5 МИНУТ', pB);
         dropText(c, 'ЧТО ВЫБЕРЕШЬ?', W / 2, 270, 92, t, C.ask, { fill: '#fff', stagger: .035 });
         plate(c, W / 2, 1560, 900, 190, t, C.cta, { fill: '#fff', draw: c => {
           txt(c, 'Пиши в комментах:', 0, -18, 58, { font: FP(58), fill: INK, lw: 0, shadow: false });
@@ -79,7 +82,7 @@
         // tapping finger: A then B
         if (t > C.tapA - .5) {
           const goB = smt(t, C.tapB - .45, C.tapB - .05), back = smt(t, C.tapA2 - .45, C.tapA2 - .05);
-          const fx = lerp(lerp(250, 650, goB), 250, back), fy = lerp(lerp(640, 1370, goB), 640, back);
+          const fx = lerp(lerp(250, 540, goB), 250, back), fy = lerp(lerp(720, 1240, goB), 720, back);
           const pr = [C.tapA, C.tapB, C.tapA2].reduce((m, tp) => Math.max(m, Math.exp(-Math.pow((t - tp) / .07, 2))), 0);
           c.save(); c.globalAlpha = smt(t, C.tapA - .5, C.tapA - .2); tapFinger(c, fx + 40, fy + 40, pr); c.restore();
         }
