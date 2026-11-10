@@ -23,7 +23,7 @@
 python3 tools/audio.py
 node tools/render.js 1 build/p1 0 1080 4
 ffmpeg -framerate 60 -i build/p1/f%05d.jpg -i out/p1_mix.wav -af loudnorm=I=-14:TP=-1.5:LRA=11 \
-  -c:v libx264 -preset slow -crf 18 -pix_fmt yuv420p -r 60 -c:a aac -b:a 256k -ar 48000 -movflags +faststart out/part1-vybor.mp4
+  -c:v libx264 -preset slow -crf 22 -pix_fmt yuv420p -r 60 -c:a aac -b:a 192k -ar 48000 -movflags +faststart out/part1-vybor.mp4
 ```
 
 Для частей 2 и 3: кадры `0 960` и `0 1200`. Предпросмотр: открыть `src/index.html?part=2` в браузере.
