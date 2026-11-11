@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Конструктор промптов</title>
+<meta name="description" content="Собери промпт для видео, картинки или текста по полям.">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;600&family=JetBrains+Mono:wght@500&family=Unbounded:wght@700;900&display=swap">
+<link rel="stylesheet" href="site/style.css">
+</head>
+<body>
+<header class="bar">
+  <div class="wrap bar-in">
+    <a class="logo" href="index.html"><i></i>Кадр за кадром</a>
+    <nav class="nav" aria-label="Разделы">
+      <a href="index.html#models">Модели</a>
+      <a href="index.html#work">Проекты</a>
+      <a href="prompts.html" aria-current="page">Промпты</a>
+      <a href="upload.html">Загрузки</a>
+    </nav>
+    <div class="tc mono" title="Прокрутка страницы двигает плейхед"><span class="rec"></span><b id="tc">00:00:00</b><span>60 fps</span></div>
+  </div>
+  <div class="scrub" id="scrub"><span></span></div>
+</header>
+
+<main>
+  <section class="page-hero"><div class="wrap">
+    <p class="eyebrow">Конструктор промптов</p>
+    <h1>Собери <em>промпт</em> по полям</h1>
+    <p class="lead">Заполни, что знаешь, остальное выбери из подсказок. Готовый текст собирается справа — копируй и вставляй в нейросеть.</p>
+  </div></section>
+
+  <section class="page-body"><div class="wrap">
+    <div class="toolbar">
+      <div class="seg" id="type" role="group" aria-label="Для чего промпт">
+        <button type="button" data-v="video">Видео</button>
+        <button type="button" data-v="image">Картинка</button>
+        <button type="button" data-v="text">Текст</button>
+      </div>
+      <div class="seg" id="lang" role="group" aria-label="Язык подписей в промпте">
+        <button type="button" data-v="ru">Подписи по-русски</button>
+        <button type="button" data-v="en">In English</button>
+      </div>
+    </div>
+
+    <div class="builder">
+      <div class="fields" id="fields"></div>
+      <aside class="result" aria-label="Готовый промпт">
+        <div class="result-top mono"><span id="out-tag">твой промпт</span><span id="out-meta"></span></div>
+        <pre id="out"></pre>
+        <div class="actions">
+          <button class="btn small fill" type="button" id="copy">Скопировать</button>
+          <button class="btn small" type="button" id="save">Сохранить</button>
+          <button class="btn small" type="button" id="example">Пример</button>
+          <button class="btn small" type="button" id="clear">Очистить</button>
+        </div>
+        <p class="status mono" id="say" role="status" style="margin:0;padding:0 18px 16px"></p>
+      </aside>
+    </div>
+
+    <h2 class="h-sub">Сохранённые</h2>
+    <div class="saved" id="saved"></div>
+    <p class="note" style="margin-top:14px">Промпты хранятся в этом браузере на этом устройстве.</p>
+
+    <h2 class="h-sub">Шпаргалка</h2>
+    <ul class="tips">
+      <li><b>Одна сцена — один промпт</b>Для видео описывай одно действие на клип. Историю из пяти сцен собирай из пяти промптов.</li>
+      <li><b>Сначала главное</b>Кто и что делает идёт первым. Стиль, свет и камера уточняют картинку, но не заменяют сюжет.</li>
+      <li><b>Конкретика вместо оценок</b>«Красный шарф, круглые очки» работает. «Красивый и стильный» ничего не говорит модели.</li>
+      <li><b>Повторяй героя дословно</b>Чтобы персонаж не менялся от клипа к клипу, копируй его описание в каждый промпт без изменений.</li>
+      <li><b>Английский для картинок и видео</b>Генераторы изображений и видео обычно точнее понимают английский. Подписи переключаются кнопкой, свой текст переведи сам.</li>
+    </ul>
+  </div></section>
+</main>
+
+<footer class="foot" style="padding-block:28px">
+  <div class="wrap"><div class="foot-row mono" style="margin-top:0"><span>© 2026 Кадр за кадром</span><a href="index.html">На главную</a></div></div>
+</footer>
+<script src="site/main.js"></script>
+<script src="site/prompts.js"></script>
+</body>
+</html>

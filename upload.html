@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Загрузки</title>
+<meta name="description" content="Личное хранилище файлов в браузере.">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;600&family=JetBrains+Mono:wght@500&family=Unbounded:wght@700;900&display=swap">
+<link rel="stylesheet" href="site/style.css">
+</head>
+<body>
+<header class="bar">
+  <div class="wrap bar-in">
+    <a class="logo" href="index.html"><i></i>Кадр за кадром</a>
+    <nav class="nav" aria-label="Разделы">
+      <a href="index.html#models">Модели</a>
+      <a href="index.html#work">Проекты</a>
+      <a href="prompts.html">Промпты</a>
+      <a href="upload.html" aria-current="page">Загрузки</a>
+    </nav>
+    <div class="tc mono" title="Прокрутка страницы двигает плейхед"><span class="rec"></span><b id="tc">00:00:00</b><span>60 fps</span></div>
+  </div>
+  <div class="scrub" id="scrub"><span></span></div>
+</header>
+
+<main>
+  <section class="page-hero"><div class="wrap">
+    <p class="eyebrow">Загрузки</p>
+    <h1>Кидай сюда <em>что угодно</em></h1>
+    <p class="lead">Видео, картинки, звук, модели, документы. Перетащи файлы в рамку, выбери их или вставь картинку из буфера.</p>
+  </div></section>
+
+  <section class="page-body"><div class="wrap">
+    <label class="drop" id="drop" for="file-input">
+      <input type="file" id="file-input" multiple>
+      <b>Перетащи файлы сюда</b>
+      <span>или нажми, чтобы выбрать</span>
+    </label>
+    <p class="status mono" id="status" role="status"></p>
+    <p class="note" id="where">Файлы сохраняются в этом браузере на этом устройстве. Другие люди и другие устройства их не увидят. Если очистить данные сайта, файлы пропадут.</p>
+
+    <div class="head" style="margin-top:clamp(40px,6vw,64px);margin-bottom:24px">
+      <h2 style="font-size:clamp(1.3rem,3vw,2rem)">Мои файлы</h2>
+      <p class="mono"><span id="count">00</span> · <span id="usage">Занято: 0 Б</span></p>
+    </div>
+    <div class="files" id="files"></div>
+  </div></section>
+</main>
+
+<footer class="foot" style="padding-block:28px">
+  <div class="wrap"><div class="foot-row mono" style="margin-top:0"><span>© 2026 Кадр за кадром</span><a href="index.html">На главную</a></div></div>
+</footer>
+<script src="site/main.js"></script>
+<script src="site/upload.js"></script>
+</body>
+</html>

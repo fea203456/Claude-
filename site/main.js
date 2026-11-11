@@ -25,7 +25,7 @@
   /* ── Проекты из projects.js ── */
   var list = document.getElementById("clips");
   var projects = window.PROJECTS || [];
-  list.innerHTML = projects.map(function (p) {
+  if (list) list.innerHTML = projects.map(function (p) {
     var m = p.media || {}, media = "";
     var tall = /^\s*9\s*\/\s*16/.test(m.ratio || "");
     if (m.type === "video") {
@@ -172,10 +172,11 @@
   var sticks = Array.prototype.slice.call(document.querySelectorAll("[data-stickman]"));
   function frame(ms) {
     var t = ms / 1000;
-    drawBall(t);
+    if (ballC) drawBall(t);
     sticks.forEach(function (c) { drawStick(c, t); });
     if (!still) requestAnimationFrame(frame);
   }
+  if (!ballC && !sticks.length) return;
   if (still) { frame(2600); window.addEventListener("resize", function () { frame(2600); }); }
   else requestAnimationFrame(frame);
 })();
