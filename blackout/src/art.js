@@ -91,7 +91,7 @@ function city(t, st) {
   layer(0, c => {
     fr(c, -3000, 540, 6000, 1800, st.evening ? '#1c1c3c' : '#0a1024');
     tower(c, st, t);
-    if (st.mast) { fr(c, 330, 120, 14, 420, '#2a3563'); for (let i = 0; i < 4; i++) fr(c, 302, 150 + i * 60, 70, 8, '#2a3563'); const on = st.mast === 'on'; circ(c, 337, 110, 12); c.fillStyle = on && Math.sin(t * 9) > 0 ? P.red : '#3a2030'; c.fill(); if (on) for (let i = 0; i < 3; i++) { const k = (t * 1.2 + i / 3) % 1; c.globalAlpha = 1 - k; c.lineWidth = 6; c.strokeStyle = P.cyan; c.beginPath(); c.arc(337, 110, 40 + k * 160, -Math.PI * .8, -Math.PI * .2); c.stroke(); } c.globalAlpha = 1; }
+    if (st.mast) { fr(c, 328, 120, 18, 420, '#5a6aa8'); for (let i = 0; i < 4; i++) fr(c, 296, 150 + i * 60, 82, 10, '#5a6aa8'); c.strokeStyle = '#5a6aa8'; c.lineWidth = 6; c.beginPath(); c.moveTo(337, 130); c.lineTo(270, 540); c.moveTo(337, 130); c.lineTo(404, 540); c.stroke(); const on = st.mast === 'on'; circ(c, 337, 110, 12); c.fillStyle = on && Math.sin(t * 9) > 0 ? P.red : '#3a2030'; c.fill(); if (on) for (let i = 0; i < 3; i++) { const k = (t * 1.2 + i / 3) % 1; c.globalAlpha = 1 - k; c.lineWidth = 6; c.strokeStyle = P.cyan; c.beginPath(); c.arc(337, 110, 40 + k * 160, -Math.PI * .8, -Math.PI * .2); c.stroke(); } c.globalAlpha = 1; }
     wifi(c, 0, TW.top - 130, st.wifi || 'off', t, st.wifiK != null ? st.wifiK : 1);
   });
   layer(-380, c => { fr(c, -1400, 820, 2800, 900, '#060a18'); fr(c, -700, 600, 16, 240, '#060a18'); fr(c, -760, 640, 136, 10, '#060a18'); fr(c, 520, 680, 260, 150, '#060a18'); fr(c, 600, 560, 12, 130, '#060a18'); });
@@ -138,8 +138,8 @@ function section(c, t, st) {
 function chip(c, str, x, y, size, bg, fg, align = 'center') { c.save(); c.font = FT(800, size); const w = c.measureText(str).width + size * .9, x0 = align === 'left' ? x : align === 'right' ? x - w : x - w / 2; fr(c, x0, y - size * .78, w, size * 1.3, bg, size * .22); c.fillStyle = fg; c.textAlign = 'center'; c.fillText(str, x0 + w / 2, y + size * .2); c.restore(); }
 function bgPattern(c) { fr(c, -3000, -3000, 6000, 6000, P.bg); c.save(); c.globalAlpha = .5; c.strokeStyle = '#131e40'; c.lineWidth = 3; for (let i = -40; i < 40; i++) { c.beginPath(); c.moveTo(i * 90 - 1500, -2000); c.lineTo(i * 90 + 1500, 2000); c.stroke(); } c.restore(); }
 function phoneBig(c, t, pct, st) {
-  fr(c, -230, -430, 460, 860, '#0a0f20', 60); fr(c, -205, -395, 410, 790, '#131c3d', 40); fr(c, -60, -420, 120, 18, '#0a0f20', 9);
-  const col = pct <= 20 ? P.red : pct <= 30 ? '#ff9a3a' : '#6fe08a', blink = pct <= 5 ? (.5 + .5 * Math.sin(t * 12)) : 1;
+  fr(c, -230, -430, 460, 860, '#3a4a86', 60); fr(c, -214, -414, 428, 828, '#0a0f20', 48); fr(c, -205, -395, 410, 790, '#16224a', 40); fr(c, -60, -420, 120, 18, '#0a0f20', 9);
+  const col = pct <= 20 ? P.red : pct <= 30 ? '#ff9a3a' : '#6fe08a', blink = pct <= 5 ? (.72 + .28 * Math.sin(t * 12)) : 1;
   fr(c, -150, -130, 280, 150, '#0a0f20', 22); fr(c, 130, -85, 22, 60, '#0a0f20', 8); c.save(); c.globalAlpha = blink; fr(c, -136, -116, Math.max(8, 252 * pct / 100), 122, col, 14); c.restore();
   c.save(); c.font = FT(900, 150); c.textAlign = 'center'; c.fillStyle = col; c.globalAlpha = blink; c.fillText(Math.round(pct) + '%', 0, 230); c.restore();
   if (st && st.icons) { const k = st.icons;

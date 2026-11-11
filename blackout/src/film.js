@@ -16,6 +16,7 @@
   S.city = (t, L, u, lt) => {
     const after = L.i > WAVE, st = { level: after ? 0 : 1, towerLit: after ? 0 : 1, wifi: 'off' };
     let cx = Math.sin(u * .3) * 30, cy = -150 + u * 8, cz = 1120 - u * 30, rot = 0;
+    if (L.i === 1) { const k = smt(lt, .28, .36) * (1 - smt(lt, .62, .74)); st.level = 1 - k * .9; st.towerLit = 1 - k; }
     if (L.fx === 'wifi') { st.wifi = 'on'; st.wifiK = spring(lt, 13, 6); }
     if (L.fx === 'flick') { st.wifi = 'on'; st.level = hash(Math.floor(t * 16)) > .2 ? 1 : .35; cy = -120; cz = 1000 - u * 40; }
     if (L.fx === 'flick2') { st.wifi = 'dim'; st.level = hash(Math.floor(t * 22)) > .45 ? 1 : .2; st.towerLit = st.level; cy = -120; cz = 1000 - u * 40; }
@@ -77,7 +78,7 @@
     cam(lerp(-90, -30, seg(u, 0, 3)) + (torch ? u * 90 : 0), 150, 860 - u * 25, 0, .2);
     flatSet(t, { off, front, clock: L.ts, draw: c => { const h = person(c, Object.assign({ x: px, y: 432, t }, MARK, pose));
       if (torch) { const hx = px + h.ra[0], hy = 432 + h.ra[1]; c.save(); c.globalCompositeOperation = 'lighter'; c.globalAlpha = .28; c.beginPath(); c.moveTo(hx + 50, hy - 14); c.lineTo(hx + 1100, hy - 330); c.lineTo(hx + 1100, hy + 330); c.lineTo(hx + 50, hy + 14); c.fillStyle = '#ffe9a8'; c.fill(); c.restore(); } } });
-    dark(off * .62); if (off < .5) screen(c => { c.globalCompositeOperation = 'lighter'; c.globalAlpha = .1; c.fillStyle = '#ffb060'; c.fillRect(0, 0, W, H); });
+    dark(off * (torch ? .46 : .62)); if (off < .5) screen(c => { c.globalCompositeOperation = 'lighter'; c.globalAlpha = .1; c.fillStyle = '#ffb060'; c.fillRect(0, 0, W, H); });
     if (L.fx === 'msg') screen(c => { const k = spring(lt, 14, 7); c.save(); c.translate(W / 2, 360 - (1 - k) * 260); fr(c, -420, -84, 848, 176, 'rgba(0,0,0,.4)', 40); fr(c, -424, -90, 848, 176, '#16203f', 40); circ(c, -330, -2, 56); c.fillStyle = TIM.top; c.fill(); c.font = FT(900, 58); c.textAlign = 'center'; c.fillStyle = '#1a1430'; c.fillText('Т', -330, 18); c.textAlign = 'left'; c.font = FT(800, 34); c.fillStyle = '#8fa0d0'; c.fillText('ТИМ · сейчас', -250, -30); c.font = FT(800, 50); c.fillStyle = '#fff'; c.fillText('пап, я уже в лифте!', -250, 36); c.restore(); });
   };
   function liftSet(t, st) {   // st: {lit 0..1, emg 0..1, floor:'14', sit}
@@ -93,7 +94,7 @@
     let lit = 1, emg = 0, floor = String(12 + Math.min(2, Math.floor(u / .45))), sit = false, sh = 0;
     if (L.fx === 'stop') { lit = lt < .2 ? 1 : (lt < .55 ? (hash(Math.floor(t * 36)) > .5 ? 1 : 0) : 0); floor = lt < .2 ? '14' : '--'; sh = wob(lt - .12, 34, 7) * 26; }
     if (L.fx === 'emg' || L.fx === 'emgflick') { lit = 0; floor = '--'; sit = true; emg = .75 + .15 * Math.sin(t * 3); if (L.fx === 'emgflick' && lt > .35) emg *= hash(Math.floor(t * 18)) > .4 ? 1 : .15; }
-    cam(Math.sin(u * .7) * 10, 170 + sh, 860 - u * 30, sh * .0006, .2); liftSet(t, { lit, emg, floor, sit }); dark(lit > .5 ? 0 : .5 - emg * .25);
+    cam(Math.sin(u * .7) * 10, 170 + sh, 860 - u * 30, sh * .0006, .2); liftSet(t, { lit, emg, floor, sit }); dark(lit > .5 ? 0 : .34 - emg * .2);
   };
   S.shaft = (t, L, u, lt) => {
     const st = { lit: .5 };
