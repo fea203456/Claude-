@@ -45,7 +45,7 @@ for i in range(int((DUR - T_OFF) / .5)):                                      # 
 # ---------- per-line sound ----------
 for l in LN:
     t0, s, red = l["t"], l["sfx"], "^" in l["text"]
-    if l["text"]: M.s(t0, softtick(), .5)
+    if l["text"]: M.s(t0, softtick(), .3)
     if s == "chime": M.s(t0, B.bell(86, 1.0), .22); M.s(t0 + .08, B.bell(93, 1.0), .14)
     if s == "card": M.s(t0, band(noise(.12), 600, 5000) * env(.12, .001, .03), .7); M.s(t0, B.thud(.5, 110, .12), .5)
     if s == "buzz": M.s(t0 + .1, buzz(l["d"] - .2), .6)
@@ -69,7 +69,14 @@ for l in LN:
 # the instant of the blackout: everything electric drops out
 M.duck(T_OFF, T_OFF + .9, .0, .03)
 
-x = M.bus['mus'] * .9 + M.bus['sfx']; pk = np.max(np.abs(x)) + 1e-9; x = np.tanh(x / pk * 1.5) / np.tanh(1.5) * .89
+# ---------- narration ----------
+vox = np.zeros((M.N, 2)); env_v = np.zeros(M.N)
+for v in BK.get("vo", []):
+    w = wave.open(os.path.join(ROOT, f"voice/t/s{v['k']:02d}.wav")); y = np.frombuffer(w.readframes(w.getnframes()), "<i2") / 32768
+    y = y / (np.max(np.abs(y)) + 1e-9) * .8; i = int(v["t"] * SR); y = y[: M.N - i]; vox[i:i + len(y)] += y[:, None]; env_v[i:i + len(y)] = 1
+k = int(.12 * SR); env_v = np.convolve(env_v, np.ones(k) / k, "same")          # smooth ducking envelope
+M.bus['mus'] *= (1 - .45 * env_v)[:, None]; M.bus['sfx'] *= (1 - .3 * env_v)[:, None]
+x = M.bus['mus'] * .9 + M.bus['sfx'] * .8 + vox * 1.5; pk = np.max(np.abs(x)) + 1e-9; x = np.tanh(x / pk * 1.5) / np.tanh(1.5) * .89
 os.makedirs(os.path.join(ROOT, 'out'), exist_ok=True)
 for i, (a, b) in enumerate(PARTS):
     y = x[int(a * SR):int(b * SR)].copy(); f = int(.03 * SR); y[:f] *= np.linspace(0, 1, f)[:, None]; g = int(.25 * SR); y[-g:] *= np.linspace(1, 0, g)[:, None]
