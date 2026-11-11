@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!--page-->
+<title>Кадр за кадром</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Моушн-проекты: анимационные ролики, истории и эксперименты.">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;600&family=JetBrains+Mono:wght@500&family=Unbounded:wght@700;900&display=swap">
+<link rel="stylesheet" href="site/style.css">
+
+<header class="bar">
+  <div class="wrap bar-in">
+    <a class="logo" href="#top"><i></i>Кадр за кадром</a>
+    <nav class="nav" aria-label="Разделы">
+      <a href="#work">Проекты</a>
+      <a href="#contact">Контакты</a>
+    </nav>
+    <div class="tc mono" title="Прокрутка страницы двигает плейхед"><span class="rec"></span><b id="tc">00:00:00</b><span>60 fps</span></div>
+  </div>
+  <div class="scrub" id="scrub"><span></span></div>
+</header>
+
+<main id="top">
+  <section class="hero">
+    <div class="wrap">
+      <p class="eyebrow">Моушн · анимация · истории</p>
+      <h1 class="title" aria-label="Кадр за кадром">
+        <span class="row" data-split>Кадр</span>
+        <span class="row mid"><span class="tag">за</span><span class="tape"></span></span>
+        <span class="row out" data-split>кадром</span>
+      </h1>
+      <p class="lead">Здесь живут мои проекты: <strong>ролики, персонажи и эксперименты с движением.</strong> Каждый новый встаёт на линейку первым.</p>
+    </div>
+    <figure class="stage" style="margin-inline:0;margin-bottom:0">
+      <canvas id="ball" role="img" aria-label="Мяч прыгает слева направо и оставляет след из прошлых кадров"></canvas>
+      <figcaption>луковая кожа<br>12 кадров в секунду</figcaption>
+    </figure>
+  </section>
+
+  <div class="ticker" aria-hidden="true">
+    <div>
+      <span>Идея</span><span>Раскадровка</span><span>Анимация</span><span>Озвучка</span><span>Звук</span><span>Рендер</span>
+      <span>Идея</span><span>Раскадровка</span><span>Анимация</span><span>Озвучка</span><span>Звук</span><span>Рендер</span>
+    </div>
+  </div>
+
+  <section class="work" id="work">
+    <div class="wrap">
+      <div class="head">
+        <h2>Проекты</h2>
+        <p class="mono">на линейке: <span id="count">00</span></p>
+      </div>
+      <div class="clips" id="clips"></div>
+      <div class="slot reveal" style="margin-top:clamp(48px,8vw,104px)">
+        <b>Место для следующего проекта</b>
+        Новый блок добавляется одной записью в списке проектов.
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="foot" id="contact">
+  <div class="wrap">
+    <h2>Есть идея?<br><em>Давай оживим.</em></h2>
+    <a class="btn" href="https://github.com/fea203456" target="_blank" rel="noopener">GitHub</a>
+    <div class="foot-row mono">
+      <span>© 2026 Кадр за кадром</span>
+      <span>Собрано вручную, без шаблонов</span>
+    </div>
+  </div>
+</footer>
+
+<script src="site/projects.js"></script>
+<script src="site/main.js"></script>
+<!--/page-->
+</body>
+</html>
