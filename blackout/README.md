@@ -41,7 +41,7 @@
 python3 tools/audio.py
 node tools/render.js b1 build/b1 0 1542 4
 ffmpeg -framerate 60 -i build/b1/f%05d.jpg -i out/b1_mix.wav -af loudnorm=I=-14:TP=-1.5:LRA=11 \
-  -c:v libx264 -preset slow -crf 20 -pix_fmt yuv420p -r 60 -c:a aac -b:a 192k -ar 48000 -movflags +faststart out/blackout-ep01-part1.mp4
+  -c:v libx264 -preset slow -crf 21 -pix_fmt yuv420p -r 60 -c:a aac -b:a 192k -ar 48000 -movflags +faststart out/blackout-ep01-part1.mp4
 node tools/render.js c1 --stills out 0   # обложка
 ```
 
