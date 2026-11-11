@@ -143,10 +143,10 @@ function phoneBig(c, t, pct, st) {
   fr(c, -150, -130, 280, 150, '#0a0f20', 22); fr(c, 130, -85, 22, 60, '#0a0f20', 8); c.save(); c.globalAlpha = blink; fr(c, -136, -116, Math.max(8, 252 * pct / 100), 122, col, 14); c.restore();
   c.save(); c.font = FT(900, 150); c.textAlign = 'center'; c.fillStyle = col; c.globalAlpha = blink; c.fillText(Math.round(pct) + '%', 0, 230); c.restore();
   if (st && st.icons) { const k = st.icons;
-    [[-1, 'ЭКРАН'], [1, 'ФОНАРИК']].forEach(([sd, lab]) => { const ix = sd * 345, iy = -560; c.save(); c.globalAlpha = k; circ(c, ix, iy, 90); c.fillStyle = '#1e2e5e'; c.fill();
+    [[-1, 'ЭКРАН'], [1, 'ФОНАРИК']].forEach(([sd, lab]) => { const ix = sd * 350, iy = -330; c.save(); c.globalAlpha = k; circ(c, ix, iy, 90); c.fillStyle = '#1e2e5e'; c.fill();
       if (sd < 0) { circ(c, ix, iy, 30); c.fillStyle = P.yel; c.fill(); c.strokeStyle = P.yel; c.lineWidth = 9; c.lineCap = 'round'; for (let i = 0; i < 8; i++) { const a = i * Math.PI / 4 + t; c.beginPath(); c.moveTo(ix + Math.cos(a) * 44, iy + Math.sin(a) * 44); c.lineTo(ix + Math.cos(a) * 62, iy + Math.sin(a) * 62); c.stroke(); } }
       else { c.save(); c.translate(ix, iy); c.rotate(-.5); fr(c, -46, -14, 60, 28, '#dfe7ff', 6); fr(c, 12, -22, 22, 44, '#aab6e0', 5); c.globalAlpha = k * .6; c.beginPath(); c.moveTo(34, -18); c.lineTo(100, -50); c.lineTo(100, 50); c.lineTo(34, 18); c.fillStyle = P.yel; c.fill(); c.restore(); }
       chip(c, lab, ix, iy + 150, 34, '#1e2e5e', P.white);
-      if (st.drain) for (let i = 0; i < 6; i++) { const u = (t * 1.4 + i / 6) % 1; c.globalAlpha = k * Math.sin(Math.PI * u); circ(c, lerp(sd * 120, ix - sd * 40, u), lerp(-150, iy + 90, u), 11); c.fillStyle = col; c.fill(); }
+      if (st.drain) for (let i = 0; i < 6; i++) { const u = (t * 1.4 + i / 6) % 1; c.globalAlpha = k * Math.sin(Math.PI * u); circ(c, lerp(sd * 140, ix - sd * 80, u), lerp(-70, iy + 40, u), 11); c.fillStyle = col; c.fill(); }
       c.restore(); }); }
 }

@@ -115,8 +115,8 @@
   S.rule3 = (t, L, u, lt) => { ruleCam(u); const st = { lit: .15, cab: 14.5, x: L.fx !== '' , stairs: L.fx === 'stairs' };
     layer(300, c => bgPattern(c)); layer(0, c => { c.save(); c.translate(0, 180); c.scale(1.06, 1.06); section(c, t, st);
       if (L.fx !== '') chip(c, 'ЛИФТ', -170, floorY(15.5) + 26, 38, P.red, '#fff'); if (L.fx === 'stairs') { const a = spring(lt - .1, 14, 7); c.save(); c.translate(270, floorY(8)); c.scale(a, a); chip(c, 'ЛЕСТНИЦА', 0, 0, 40, P.yel, '#1a1430'); c.restore(); } c.restore(); }); };
-  S.rule1 = (t, L, u, lt) => { cam(Math.sin(u * .5) * 14, 190, 900 - u * 25, Math.sin(u * .4) * .006, 0); const k = ['', 'bat', 'icons', 'drain'].indexOf(L.fx);
-    layer(300, c => bgPattern(c)); layer(0, c => { const a = k === 0 ? spring(lt - .15, 12, 7) : 1; c.save(); c.translate(0, 60); c.scale(a, a); c.rotate(wob(lt, 10, 5) * .02);
+  S.rule1 = (t, L, u, lt) => { cam(Math.sin(u * .5) * 14, 110, 900 - u * 25, Math.sin(u * .4) * .006, 0); const k = ['', 'bat', 'icons', 'drain'].indexOf(L.fx);
+    layer(300, c => bgPattern(c)); layer(0, c => { const a = k === 0 ? spring(lt - .15, 12, 7) : 1; c.save(); c.translate(0, 60); c.scale(a * .9, a * .9); c.rotate(wob(lt, 10, 5) * .02);
       phoneBig(c, t, k === 3 ? lerp(34, 21, eio(seg(lt, .1, L.d))) : 34, { icons: k >= 2 ? (k === 2 ? spring(lt, 13, 7) : 1) : 0, drain: k === 3 }); c.restore(); }); };
   S.phone = (t, L, u, lt) => { cam(Math.sin(u) * 8, 200, 900 - u * 40, wob(lt, 20, 6) * .01, 0); layer(300, c => fr(c, -3000, -3000, 6000, 6000, '#070b18')); layer(0, c => { glow(c, 0, 60, 900, 'rgba(255,60,60,.35)', .5 + .3 * Math.sin(t * 12)); c.save(); c.translate(0, 60); phoneBig(c, t, 3); c.restore(); }); };
   S.call = (t, L, u, lt) => {
@@ -187,7 +187,7 @@
     grab(() => { cam(Math.sin(u * .6) * 8, 410, 900, 0, .2); liftSet(t, { lit: 0, emg: .75 + .15 * Math.sin(t * 3), floor: '--', sit: true }); dark(.3); }, panelB);
     screen(c => { fr(c, 0, 0, W, H, '#070b18'); const kb = L.fx === 'b' ? eout(seg(lt, 0, .35)) : 0, ka = L.fx === 'a' ? eout(seg(lt, 0, .35)) : 1;
       const pan = (pc, y, k, lab, col) => { if (k <= 0) return; c.save(); c.globalAlpha = k; c.translate(0, (1 - k) * 60); rr(c, 60, y, 960, 730, 26); c.save(); c.clip(); c.drawImage(pc, 0, 380, 1080, 821, 60, y, 960, 730); c.restore(); c.lineWidth = 8; c.strokeStyle = '#dfe7ff'; rr(c, 60, y, 960, 730, 26); c.stroke(); chip(c, lab, 100, y + 70, 40, col, '#fff', 'left'); c.restore(); };
-      pan(panelA, 270, ka, '21 ЭТАЖ', MARK.top); pan(panelB, 1040, kb, 'ЛИФТ · 14–15', P.red); fr(c, 0, 1015, W * (L.fx === 'b' ? 1 : eout(seg(lt, .2, .7))), 10, P.red); if (L.fx === 'b') subtitle(c, LN[L.i - 1], .5); });
+      pan(panelA, 270, ka, '21 ЭТАЖ', MARK.top); pan(panelB, 1040, kb, 'ЛИФТ · 14–15', P.red); fr(c, 0, 1015, W * (L.fx === 'b' ? 1 : eout(seg(lt, .2, .7))), 10, P.red); if (L.fx === 'b' && L.text) subtitle(c, LN[L.i - 1], .5); });
   };
   S.end = (t, L, u, lt) => {
     cam(Math.sin(u * .4) * 30, -260, 1500 - u * 30); city(t, { level: 0, towerLit: 0, wifi: L.fx === 'p1' ? 'off' : 'dead' }); dark(.72);
@@ -226,12 +226,16 @@
   }
   window.FILM = {};
   PARTS.forEach((p, i) => { window.FILM['b' + (i + 1)] = { dur: p[1] - p[0], render: t => frame(Math.min(p[0] + t, p[1] - 1e-4), i) }; });
-  // covers: key still + big title
-  const COV = [{ t: LN.find(l => l.fx === 'wave').t + .78, a: 'БЛЭКАУТ', b: 'Погас весь город', col: P.yel }, { t: LN.find(l => l.fx === 'dead').t + .9, a: 'УМНЫЙ ДОМ', b: 'оглох', col: P.red }, { t: LN.find(l => l.fx === 'b').t + 1.2, a: 'ЗАПЕРТ', b: 'Ключ — на минус втором', col: P.red }];
-  COV.forEach((cv, i) => { window.FILM['c' + (i + 1)] = { dur: 1, render: () => { const L = lineAt(cv.t); S[L.scene](cv.t, L, cv.t - L.g0, cv.t - L.t); vign(.7);
-    screen(c => { const g = c.createLinearGradient(0, 0, 0, H); g.addColorStop(0, 'rgba(5,7,18,.88)'); g.addColorStop(.38, 'rgba(5,7,18,.15)'); g.addColorStop(.7, 'rgba(5,7,18,.2)'); g.addColorStop(1, 'rgba(5,7,18,.92)'); c.fillStyle = g; c.fillRect(0, 0, W, H);
+  // covers: composed key frame + big title
+  const COV = [
+    { a: 'БЛЭКАУТ', b: 'Погас весь город', col: P.yel, y: 470, tag: '18:03 · ЛИФТ ВСТАЛ', draw: () => { cam(40, -330, 1000); city(3, { front: -60, level: 1, towerLit: .55, wifi: 'dim' }); } },
+    { a: 'УМНЫЙ ДОМ', b: 'оглох', col: P.red, y: 470, tag: '18:20 · СЕТИ НЕТ', draw: () => { cam(0, -690, 680); city(3, { level: 0, towerLit: 0, wifi: 'dead' }); } },
+    { a: 'ЗАПЕРТ', b: 'Ключ — на минус втором', col: P.red, y: 1010, band: true, tag: '21:55 · ЗАРЯД 3%', draw: () => { const L = LN.find(l => l.fx === 'b'); S.split(L.t + 1.2, Object.assign({}, L, { text: '' }), 3, 1.2); } }];
+  COV.forEach((cv, i) => { window.FILM['c' + (i + 1)] = { dur: 1, render: () => { cv.draw(); vign(.7);
+    screen(c => { const g = c.createLinearGradient(0, 0, 0, H); g.addColorStop(0, 'rgba(5,7,18,.9)'); g.addColorStop(.36, 'rgba(5,7,18,.1)'); g.addColorStop(.72, 'rgba(5,7,18,.15)'); g.addColorStop(1, 'rgba(5,7,18,.92)'); c.fillStyle = g; c.fillRect(0, 0, W, H);
+      if (cv.band) fr(c, 0, cv.y - 190, W, 330, 'rgba(5,7,18,.86)');
       chip(c, 'ЭПИЗОД 01', 70, 210, 46, P.red, '#fff', 'left'); chip(c, `ЧАСТЬ ${i + 1}`, 1010, 210, 46, '#fff', '#0d1530', 'right');
-      c.font = FT(900, cv.a.length > 8 ? 150 : 190); c.textAlign = 'center'; c.lineJoin = 'round'; c.lineWidth = 26; c.strokeStyle = 'rgba(6,9,24,.95)'; c.strokeText(cv.a, W / 2, 470); c.fillStyle = cv.col; c.fillText(cv.a, W / 2, 470);
-      c.font = FT(900, 76); c.lineWidth = 18; c.strokeText(cv.b, W / 2, 590); c.fillStyle = '#fff'; c.fillText(cv.b, W / 2, 590);
-      fr(c, W / 2 - 300, 1640, 600, 96, P.yel, 20); c.font = FT(900, 52); c.fillStyle = '#0d1530'; c.fillText(['18:03 · ЛИФТ ВСТАЛ', '18:20 · СЕТИ НЕТ', '21:55 · ЗАРЯД 3%'][i], W / 2, 1706); }); grain(0); } }; });
+      c.font = FT(900, cv.a.length > 8 ? 150 : 200); c.textAlign = 'center'; c.lineJoin = 'round'; c.lineWidth = 26; c.strokeStyle = 'rgba(6,9,24,.95)'; c.strokeText(cv.a, W / 2, cv.y); c.fillStyle = cv.col; c.fillText(cv.a, W / 2, cv.y);
+      c.font = FT(900, 76); c.lineWidth = 18; c.strokeText(cv.b, W / 2, cv.y + 110); c.fillStyle = '#fff'; c.fillText(cv.b, W / 2, cv.y + 110);
+      fr(c, W / 2 - 310, 1640, 620, 96, P.yel, 20); c.font = FT(900, 52); c.fillStyle = '#0d1530'; c.fillText(cv.tag, W / 2, 1706); }); grain(0); } }; });
 })();
