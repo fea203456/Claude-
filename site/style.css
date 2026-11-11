@@ -149,6 +149,15 @@ body::before {
 .ticker span:nth-child(even)::after { background: var(--lime); }
 @keyframes slide { to { transform: translateX(-50%); } }
 
+/* ── 3D-модели ───────────────────────────────────── */
+.models { padding-block: clamp(56px, 9vw, 120px) 0; }
+.turntables { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(16px, 3vw, 32px); }
+.turn { margin: 0; min-width: 0; background: var(--bg-2); border: 1px solid var(--line); border-radius: 18px; overflow: hidden; }
+.turn canvas { display: block; width: 100%; aspect-ratio: 1 / 1; max-height: 460px; cursor: grab; touch-action: pan-y; outline-offset: -4px; }
+.turn canvas.grab { cursor: grabbing; }
+.turn figcaption { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; padding: 16px 20px 20px; border-top: 1px solid var(--line); color: var(--muted); font-size: 0.95rem; }
+.turn figcaption b { font: 700 1.15rem/1 var(--display); color: var(--fg); }
+
 /* ── Проекты ─────────────────────────────────────── */
 .work { padding-block: clamp(56px, 9vw, 120px); }
 .head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: clamp(28px, 5vw, 56px); }
@@ -217,6 +226,8 @@ body::before {
   .clip:nth-child(even) .frame { box-shadow: 8px 8px 0 var(--lime); }
   .frame.tall { width: min(78%, 300px); }
   .nav { display: none; }
+  .turntables { grid-template-columns: minmax(0, 1fr); }
+  .turn canvas { aspect-ratio: 4 / 3; }
   .tc { margin-left: auto; }
   .stage figcaption { display: none; }
   .title .out { -webkit-text-stroke-width: 3px; }

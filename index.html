@@ -14,6 +14,7 @@
   <div class="wrap bar-in">
     <a class="logo" href="#top"><i></i>Кадр за кадром</a>
     <nav class="nav" aria-label="Разделы">
+      <a href="#models">Модели</a>
       <a href="#work">Проекты</a>
       <a href="#contact">Контакты</a>
     </nav>
@@ -46,6 +47,25 @@
     </div>
   </div>
 
+  <section class="models" id="models">
+    <div class="wrap">
+      <div class="head">
+        <h2>Покрути</h2>
+        <p class="mono">потяни модель мышкой или пальцем</p>
+      </div>
+      <div class="turntables">
+        <figure class="turn reveal">
+          <canvas data-model="alex" tabindex="0" role="img" aria-label="3D-модель Алекса: розовый персонаж в очках машет рукой. Стрелки влево и вправо поворачивают модель."></canvas>
+          <figcaption><b>Алекс</b><span>Сначала система, потом результат.</span></figcaption>
+        </figure>
+        <figure class="turn reveal">
+          <canvas data-model="semyon" tabindex="0" role="img" aria-label="3D-модель Семёна: сонный серо-синий кубик. Стрелки влево и вправо поворачивают модель."></canvas>
+          <figcaption><b>Семён</b><span>До дедлайна 30 дней. Не торопится.</span></figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
   <section class="work" id="work">
     <div class="wrap">
       <div class="head">
@@ -74,6 +94,8 @@
 
 <script src="site/projects.js"></script>
 <script src="site/main.js"></script>
+<script src="site/vendor/three.min.js"></script>
+<script src="site/models.js"></script>
 <!--/page-->
 </body>
 </html>
