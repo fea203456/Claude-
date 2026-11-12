@@ -1,0 +1,6 @@
+monitor.session*
+monitor.sqlite3*
+config.json
+__pycache__/
+.pytest_cache/
+.venv/

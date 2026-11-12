@@ -1,0 +1,10 @@
+{
+  "interval_sec": 300,
+  "watchlist": [],
+  "max_floor_stars": 5000,
+  "max_gifts_per_cycle": 25,
+  "min_profit_pct": 10.0,
+  "floor_drop_pct": 15.0,
+  "rare_permille": 15,
+  "rare_over_floor_pct": 20.0
+}

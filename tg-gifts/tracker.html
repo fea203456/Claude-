@@ -1,0 +1,401 @@
+<title>Учёт подарков</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Раскладка: рабочий стол трейдера — сводка сверху, под ней три вкладки (сделки, калькулятор, памятка). */
+:root{
+  --bg:#f2f4f9; --surface:#ffffff; --line:#dde2ec; --ink:#131a2b; --muted:#5a6479;
+  --accent:#2459c4; --accent-ink:#ffffff; --good:#157a4b; --bad:#bf3636; --star:#a36a12; --soft:#e8edf7;
+  --display:"Manrope","Inter",system-ui,sans-serif; --body:"Inter",system-ui,sans-serif; --mono:"JetBrains Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0e121b; --surface:#161b27; --line:#283044; --ink:#e7ebf4; --muted:#96a0b6;
+  --accent:#73a5ff; --accent-ink:#0b1220; --good:#4fc790; --bad:#f27f7f; --star:#e0b057; --soft:#1e2535; color-scheme:dark } }
+:root[data-theme="dark"]{
+  --bg:#0e121b; --surface:#161b27; --line:#283044; --ink:#e7ebf4; --muted:#96a0b6;
+  --accent:#73a5ff; --accent-ink:#0b1220; --good:#4fc790; --bad:#f27f7f; --star:#e0b057; --soft:#1e2535; color-scheme:dark }
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--body);padding-block:24px 56px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:1080px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+h1{font:800 26px/1.15 var(--display);margin:0;letter-spacing:-.01em}
+h2{font:700 18px/1.25 var(--display);margin:0;text-wrap:balance}
+h3{font:700 15px/1.3 var(--display);margin:0}
+p{margin:0}
+.sub{color:var(--muted);font-size:14px}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.pos{color:var(--good)} .neg{color:var(--bad)}
+header{display:flex;flex-wrap:wrap;gap:8px 20px;align-items:baseline;justify-content:space-between}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.tile{background:var(--surface);padding:14px 16px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.tile .lab{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.tile .val{font:600 22px/1.2 var(--mono);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.tile .hint{font-size:12px;color:var(--muted)}
+nav{display:flex;gap:4px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+nav a{padding:9px 14px;font:700 14px var(--display);color:var(--muted);text-decoration:none;border-bottom:2px solid transparent;margin-bottom:-1px}
+nav a[aria-current="page"]{color:var(--ink);border-color:var(--accent)}
+section{display:flex;flex-direction:column;gap:16px}
+.bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+button,.btn{font:600 14px var(--body);border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:8px 14px;border-radius:8px;cursor:pointer}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+button.link{border:0;background:none;padding:2px 4px;color:var(--accent)}
+button.link.danger{color:var(--bad)}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px;display:flex;flex-direction:column;gap:14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted);min-width:0}
+input,select{font:15px var(--body);padding:8px 10px;border:1px solid var(--line);border-radius:7px;background:var(--bg);color:var(--ink);width:100%;min-width:0}
+fieldset{border:0;padding:0;margin:0;display:flex;flex-direction:column;gap:10px}
+legend{font:700 13px var(--display);letter-spacing:.05em;text-transform:uppercase;color:var(--muted);padding:0;margin-bottom:8px}
+.scroll{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap;vertical-align:top}
+tr:last-child td{border-bottom:0}
+th{font:600 12px var(--body);letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+td.r,th.r{text-align:right}
+td .small{display:block;font-size:12px;color:var(--muted)}
+.pill{display:inline-block;font-size:12px;font-weight:600;padding:2px 8px;border-radius:99px;background:var(--soft);color:var(--muted)}
+.pill.sold{color:var(--good)} .pill.listed{color:var(--star)}
+.empty{padding:28px 18px;text-align:center;color:var(--muted)}
+.note{font-size:13px;color:var(--muted);background:var(--soft);border-radius:8px;padding:10px 12px}
+.out{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
+.out div{display:flex;flex-direction:column;gap:2px}
+.out .v{font:600 20px var(--mono);font-variant-numeric:tabular-nums}
+.guide{max-width:68ch;gap:22px}
+.guide ul,.guide ol{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+.guide .block{display:flex;flex-direction:column;gap:8px}
+.guide table{font-size:14px}
+.guide td,.guide th{white-space:normal}
+</style>
+
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Учёт подарков</h1>
+      <p class="sub">Покупки, продажи и чистая прибыль после комиссий. Всё пересчитано в TON.</p>
+    </div>
+    <p class="sub" id="sync" role="status">Загружаю сделки…</p>
+  </header>
+
+  <div class="tiles" id="tiles">
+    <div class="tile"><span class="lab">Чистая прибыль</span><span class="val" id="t-profit">—</span><span class="hint" id="t-roi">по закрытым сделкам</span></div>
+    <div class="tile"><span class="lab">В подарках</span><span class="val" id="t-stock">—</span><span class="hint" id="t-stockn">себестоимость</span></div>
+    <div class="tile"><span class="lab">Свободно</span><span class="val" id="t-free">—</span><span class="hint">бюджет + прибыль − в подарках</span></div>
+    <div class="tile"><span class="lab">Закрыто сделок</span><span class="val" id="t-closed">—</span><span class="hint" id="t-win">доля прибыльных</span></div>
+  </div>
+
+  <nav aria-label="Разделы">
+    <a href="#deals" data-tab="deals">Сделки</a>
+    <a href="#calc" data-tab="calc">Калькулятор</a>
+    <a href="#guide" data-tab="guide">Памятка</a>
+  </nav>
+
+  <section id="tab-deals">
+    <div class="bar">
+      <div class="bar" style="justify-content:flex-start">
+        <label style="flex-direction:row;align-items:center;gap:8px">Бюджет, TON <input id="set-budget" type="number" min="0" step="1" style="width:90px"></label>
+        <label style="flex-direction:row;align-items:center;gap:8px">Звёзд за 1 TON <input id="set-rate" type="number" min="1" step="1" style="width:90px"></label>
+      </div>
+      <button class="primary" id="btn-add">Добавить сделку</button>
+    </div>
+
+    <form class="panel" id="form" hidden>
+      <h2 id="form-title">Новая сделка</h2>
+      <fieldset><legend>Подарок</legend>
+        <div class="grid">
+          <label>Название <input id="f-name" required placeholder="Jelly Bunny"></label>
+          <label>Номер, модель, фон <input id="f-attrs" placeholder="#1234, Onyx Black"></label>
+          <label>Статус <select id="f-status"><option value="stock">Лежит</option><option value="listed">Выставлен</option><option value="sold">Продан</option></select></label>
+        </div>
+      </fieldset>
+      <fieldset><legend>Покупка</legend>
+        <div class="grid">
+          <label>Где купил <select id="f-buyMarket"></select></label>
+          <label>Цена <input id="f-buyPrice" type="number" min="0" step="any" required></label>
+          <label>Валюта <select id="f-buyCur"><option value="ton">TON</option><option value="stars">Stars</option></select></label>
+          <label>Доп. расходы (улучшение, перевод), в той же валюте <input id="f-extra" type="number" min="0" step="any" value="0"></label>
+          <label>Дата покупки <input id="f-buyDate" type="date"></label>
+        </div>
+      </fieldset>
+      <fieldset><legend>Продажа (план или факт)</legend>
+        <div class="grid">
+          <label>Где продаю <select id="f-sellMarket"></select></label>
+          <label>Цена продажи <input id="f-sellPrice" type="number" min="0" step="any"></label>
+          <label>Валюта <select id="f-sellCur"><option value="ton">TON</option><option value="stars">Stars</option></select></label>
+          <label>Комиссия площадки, % <input id="f-fee" type="number" min="0" max="99" step="any"></label>
+          <label>Дата продажи <input id="f-sellDate" type="date"></label>
+        </div>
+        <p class="note">Комиссия подставляется по площадке, но площадки её меняют. Сверь с суммой «вы получите» при выставлении лота.</p>
+      </fieldset>
+      <label>Заметка <input id="f-note" placeholder="почему купил, план выхода"></label>
+      <p class="neg" id="form-err" hidden></p>
+      <div class="bar" style="justify-content:flex-start">
+        <button class="primary" type="submit" id="btn-save">Сохранить</button>
+        <button type="button" id="btn-cancel">Отмена</button>
+      </div>
+    </form>
+
+    <div class="scroll">
+      <table>
+        <thead><tr><th>Подарок</th><th>Статус</th><th class="r">Вложено</th><th class="r">Безубыток</th><th class="r">Продажа</th><th class="r">Прибыль</th><th class="r">Дней</th><th></th></tr></thead>
+        <tbody id="rows"><tr><td colspan="8" class="empty">Здесь появятся твои сделки: что купил, за сколько, цена безубытка и прибыль после комиссии.</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="tab-calc" hidden>
+    <div class="panel">
+      <h2>Стоит ли брать этот лот</h2>
+      <div class="grid">
+        <label>Цена покупки <input id="c-buy" type="number" min="0" step="any" value="10"></label>
+        <label>Доп. расходы <input id="c-extra" type="number" min="0" step="any" value="0"></label>
+        <label>Где продам <select id="c-market"></select></label>
+        <label>Комиссия, % <input id="c-fee" type="number" min="0" max="99" step="any"></label>
+        <label>Планирую продать за <input id="c-sell" type="number" min="0" step="any" value="12"></label>
+      </div>
+      <div class="out">
+        <div><span class="sub">Безубыток</span><span class="v" id="c-be">—</span></div>
+        <div><span class="sub">На руки после комиссии</span><span class="v" id="c-net">—</span></div>
+        <div><span class="sub">Прибыль</span><span class="v" id="c-profit">—</span></div>
+        <div><span class="sub">Доходность</span><span class="v" id="c-roi">—</span></div>
+        <div><span class="sub">Цена для +15%</span><span class="v" id="c-t15">—</span></div>
+      </div>
+      <p class="note">Покупка и продажа считаются в одной валюте. Если покупаешь за звёзды, а продаёшь за TON, переведи цену по своему курсу.</p>
+    </div>
+  </section>
+
+  <section id="tab-guide" class="guide" hidden>
+    <div class="block">
+      <h2>Главное правило: сначала комиссия, потом всё остальное</h2>
+      <p>Продавая на встроенном маркете Telegram за звёзды, ты получаешь около 80% цены, за TON — около 90%. Значит, лот нужно продать на 25% дороже покупки (за звёзды) или на 11% дороже (за TON), просто чтобы выйти в ноль. На сторонних маркетах комиссия ниже, поэтому покупать можно где дешевле, а продавать лучше там, где меньше берут.</p>
+      <div class="scroll"><table>
+        <thead><tr><th>Площадка</th><th class="r">Комиссия продавца</th><th class="r">Безубыток</th></tr></thead>
+        <tbody>
+          <tr><td>Telegram, за Stars</td><td class="r num">~20%</td><td class="r num">+25,0%</td></tr>
+          <tr><td>Telegram, за TON</td><td class="r num">~10%</td><td class="r num">+11,1%</td></tr>
+          <tr><td>Portals</td><td class="r num">~5%</td><td class="r num">+5,3%</td></tr>
+          <tr><td>Tonnel</td><td class="r num">~3–5%</td><td class="r num">+3,1–5,3%</td></tr>
+          <tr><td>MRKT</td><td class="r num">~2%</td><td class="r num">+2,0%</td></tr>
+        </tbody></table></div>
+      <p class="note">Цифры взяты из открытых гайдов осени 2026 года, источники расходятся между собой. Перед первой сделкой проверь комиссию и правила вывода прямо в приложении площадки.</p>
+    </div>
+
+    <div class="block">
+      <h2>Как распорядиться бюджетом до 50 TON</h2>
+      <ul>
+        <li>На один подарок не больше 5–7 TON. Одна неудачная покупка не должна съесть бюджет.</li>
+        <li>Держи 20–30% свободными: выгодные лоты появляются внезапно, а деньги в подарках заперты.</li>
+        <li>Бери только ликвидные коллекции: сотни лотов в продаже и сделки каждый день. Редкий дорогой подарок может висеть неделями.</li>
+        <li>Первые 10 сделок считай обучением. Цель — не заработать, а понять рынок и не потерять на комиссиях.</li>
+        <li>Перед покупкой посчитай безубыток в калькуляторе. Если до него далеко от текущего флора, пропусти лот.</li>
+        <li>Записывай сюда каждую сделку, включая убыточные. Без учёта кажется, что ты в плюсе.</li>
+      </ul>
+    </div>
+
+    <div class="block">
+      <h2>Три рабочие схемы для новичка</h2>
+      <h3>Лот ниже флора</h3>
+      <p>Кто-то срочно продаёт или ошибся в цене. Покупаешь, выставляешь чуть ниже следующего лота. Работает, только если разрыв больше комиссии: на маркете Telegram за звёзды нужен разрыв от 30%.</p>
+      <h3>Редкий атрибут по цене флора</h3>
+      <p>У улучшенного подарка есть модель, фон и узор со своей редкостью. Продавцы часто выставляют всё по флору и не смотрят атрибуты. Редкая модель или чёрный фон стоят дороже. Прежде чем брать, найди, за сколько реально продавались такие же, а не за сколько их выставляют.</p>
+      <h3>Разница между площадками</h3>
+      <p>Один и тот же подарок на Telegram, Portals, Tonnel и MRKT стоит по-разному. Купил где дешевле, перевёл, продал где дороже и комиссия ниже. Учитывай время перевода и задержки: пока подарок в пути, цена может уйти.</p>
+    </div>
+
+    <div class="block">
+      <h2>Где теряют деньги</h2>
+      <ul>
+        <li><b>Блокировка после покупки.</b> У купленного или полученного подарка бывает срок, до которого его нельзя продать или передать. Смотри дату в карточке подарка до оплаты, иначе деньги зависнут.</li>
+        <li><b>Возврат звёзд.</b> Если звёзды, за которые куплен подарок, вернули через спор, подарок могут аннулировать уже у тебя. Покупай на маркетах, а не с рук у незнакомцев.</li>
+        <li><b>Поддельные боты.</b> У Portals, Tonnel и MRKT много клонов. Открывай маркет только по ссылке из официального канала и сохрани её.</li>
+        <li><b>Подпись в кошельке.</b> Не подтверждай в TON-кошельке запросы, которые не понимаешь. Запрос на доступ ко всем активам опустошает кошелёк.</li>
+        <li><b>Сделки в личке.</b> «Гарант» из чата часто работает в паре с продавцом. Без маркета — только с теми, кого знаешь лично.</li>
+        <li><b>Новые выпуски.</b> Большинство новых подарков после ажиотажа дешевеют ниже цены выпуска. Не бери на весь бюджет.</li>
+        <li><b>Курс TON.</b> Подарок может вырасти в TON и упасть в рублях. Прибыль считай в той валюте, в которой будешь выводить.</li>
+      </ul>
+    </div>
+
+    <div class="block">
+      <h2>Проверка перед покупкой</h2>
+      <ol>
+        <li>Сколько таких лотов в продаже и были ли продажи сегодня.</li>
+        <li>Цена безубытка с учётом комиссии площадки, где будешь продавать.</li>
+        <li>Дата, с которой подарок можно продать и передать.</li>
+        <li>Сумма не больше лимита на один подарок.</li>
+        <li>План выхода: за сколько продаёшь и что делаешь, если цена упала на 15%.</li>
+      </ol>
+      <p class="sub">Это не инвестиционная рекомендация. Рынок подарков спекулятивный: вкладывай только то, что готов потерять.</p>
+    </div>
+  </section>
+</div>
+
+<script>
+const MARKETS = [
+  {id:"tg-stars", name:"Telegram · Stars", fee:20, cur:"stars"},
+  {id:"tg-ton",   name:"Telegram · TON",   fee:10, cur:"ton"},
+  {id:"portals",  name:"Portals",          fee:5,  cur:"ton"},
+  {id:"tonnel",   name:"Tonnel",           fee:5,  cur:"ton"},
+  {id:"mrkt",     name:"MRKT",             fee:2,  cur:"ton"},
+  {id:"direct",   name:"Напрямую",         fee:0,  cur:"ton"},
+];
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const fmt = (n, d=2) => Number.isFinite(n) ? n.toLocaleString("ru-RU", {minimumFractionDigits:d, maximumFractionDigits:d}) : "—";
+const signed = (n, d=2) => (n > 0 ? "+" : "") + fmt(n, d);
+const cls = n => n > 0 ? "pos" : n < 0 ? "neg" : "";
+const num = v => { const n = parseFloat(v); return Number.isFinite(n) ? n : 0; };
+
+let db = null, deals = [], settings = {budget:50, rate:200}, editingId = null, armedDelete = null;
+
+// ---------- расчёты ----------
+const toTon = (amount, cur) => cur === "stars" ? amount / settings.rate : amount;
+function calcDeal(d){
+  const cost = toTon(num(d.buyPrice) + num(d.extra), d.buyCur);
+  const fee = num(d.feePct) / 100;
+  const breakEven = fee < 1 ? cost / (1 - fee) : NaN;           // в TON
+  const sold = d.status === "sold" && num(d.sellPrice) > 0;
+  const net = num(d.sellPrice) > 0 ? toTon(num(d.sellPrice) * (1 - fee), d.sellCur) : NaN;
+  const profit = net - cost;
+  const end = sold && d.sellDate ? new Date(d.sellDate) : new Date();
+  const days = d.buyDate ? Math.max(0, Math.round((end - new Date(d.buyDate)) / 864e5)) : NaN;
+  return {cost, breakEven, sold, net, profit, roi: cost > 0 ? profit / cost * 100 : NaN, days};
+}
+
+// ---------- отрисовка ----------
+function render(){
+  let profit = 0, soldCost = 0, stock = 0, stockN = 0, closed = 0, wins = 0;
+  const rows = deals.slice().sort((a,b) => (a.status === "sold") - (b.status === "sold") || String(b.buyDate||"").localeCompare(String(a.buyDate||"")));
+  const html = rows.map(d => {
+    const c = calcDeal(d);
+    if (c.sold){ profit += c.profit; soldCost += c.cost; closed++; if (c.profit > 0) wins++; }
+    else { stock += c.cost; stockN++; }
+    const market = id => (MARKETS.find(m => m.id === id) || {}).name || "";
+    const st = {stock:"Лежит", listed:"Выставлен", sold:"Продан"}[d.status] || "Лежит";
+    const sellCell = num(d.sellPrice) > 0
+      ? `<span class="num">${fmt(num(d.sellPrice), d.sellCur === "stars" ? 0 : 2)} ${d.sellCur === "stars" ? "⭐" : "TON"}</span><span class="small">${esc(market(d.sellMarket))}, −${fmt(num(d.feePct),1)}%</span>`
+      : `<span class="small">цена не задана</span>`;
+    const profitCell = Number.isFinite(c.profit)
+      ? `<span class="num ${cls(c.profit)}">${signed(c.profit)} TON</span><span class="small">${c.sold ? "" : "план, "}${signed(c.roi,1)}%</span>` : "—";
+    return `<tr>
+      <td><b>${esc(d.name)}</b><span class="small">${esc(d.attrs || "")}</span>${d.note ? `<span class="small">${esc(d.note)}</span>` : ""}</td>
+      <td><span class="pill ${esc(d.status)}">${st}</span></td>
+      <td class="r"><span class="num">${fmt(c.cost)} TON</span><span class="small">${esc(market(d.buyMarket))}${d.buyCur === "stars" ? `, ${fmt(num(d.buyPrice)+num(d.extra),0)} ⭐` : ""}</span></td>
+      <td class="r num">${fmt(c.breakEven)} TON</td>
+      <td class="r">${sellCell}</td>
+      <td class="r">${profitCell}</td>
+      <td class="r num">${Number.isFinite(c.days) ? c.days : "—"}</td>
+      <td><button class="link" data-edit="${esc(d.id)}">Изменить</button>
+          <button class="link danger" data-del="${esc(d.id)}">${armedDelete === d.id ? "Точно удалить?" : "Удалить"}</button></td>
+    </tr>`;
+  }).join("");
+  $("rows").innerHTML = html || `<tr><td colspan="8" class="empty">Сделок пока нет. Нажми «Добавить сделку» и запиши первую покупку: увидишь цену безубытка и прибыль после комиссии.</td></tr>`;
+
+  const p = $("t-profit"); p.textContent = closed ? signed(profit) + " TON" : "0,00 TON"; p.className = "val " + cls(profit);
+  $("t-roi").textContent = closed && soldCost > 0 ? `${signed(profit / soldCost * 100, 1)}% к вложенному` : "по закрытым сделкам";
+  $("t-stock").textContent = fmt(stock) + " TON";
+  $("t-stockn").textContent = stockN ? `${stockN} шт. по себестоимости` : "пока ничего не куплено";
+  const free = settings.budget + profit - stock;
+  const f = $("t-free"); f.textContent = fmt(free) + " TON"; f.className = "val " + (free < 0 ? "neg" : "");
+  $("t-closed").textContent = closed;
+  $("t-win").textContent = closed ? `${Math.round(wins / closed * 100)}% прибыльных` : "доля прибыльных";
+}
+
+// ---------- форма ----------
+function fillMarkets(sel){ sel.innerHTML = MARKETS.map(m => `<option value="${m.id}">${m.name}</option>`).join(""); }
+["f-buyMarket","f-sellMarket","c-market"].forEach(id => fillMarkets($(id)));
+const today = () => new Date().toISOString().slice(0,10);
+
+function openForm(d){
+  editingId = d ? d.id : null;
+  $("form-title").textContent = d ? "Изменить сделку" : "Новая сделка";
+  const v = d || {status:"stock", buyMarket:"tg-ton", buyCur:"ton", extra:0, buyDate:today(), sellMarket:"portals", sellCur:"ton", feePct:5};
+  for (const k of ["name","attrs","status","buyMarket","buyPrice","buyCur","extra","buyDate","sellMarket","sellPrice","sellCur","sellDate","note"]) $("f-"+k).value = v[k] ?? "";
+  $("f-fee").value = v.feePct ?? "";
+  $("form-err").hidden = true;
+  $("form").hidden = false;
+  $("f-name").focus();
+}
+$("btn-add").onclick = () => openForm(null);
+$("btn-cancel").onclick = () => { $("form").hidden = true; };
+$("f-buyMarket").onchange = e => { const m = MARKETS.find(m => m.id === e.target.value); if (m) $("f-buyCur").value = m.cur; };
+$("f-sellMarket").onchange = e => { const m = MARKETS.find(m => m.id === e.target.value); if (m){ $("f-fee").value = m.fee; $("f-sellCur").value = m.cur; } };
+$("f-status").onchange = e => { if (e.target.value === "sold" && !$("f-sellDate").value) $("f-sellDate").value = today(); };
+
+$("form").addEventListener("submit", async e => {
+  e.preventDefault();
+  const err = $("form-err");
+  const g = k => $("f-"+k).value.trim();
+  const d = {name:g("name"), attrs:g("attrs"), status:g("status"), buyMarket:g("buyMarket"), buyPrice:num(g("buyPrice")), buyCur:g("buyCur"),
+    extra:num(g("extra")), buyDate:g("buyDate"), sellMarket:g("sellMarket"), sellPrice:num(g("sellPrice")), sellCur:g("sellCur"),
+    feePct:num($("f-fee").value), sellDate:g("sellDate"), note:g("note")};
+  if (d.status === "sold" && !(d.sellPrice > 0)){ err.textContent = "Для проданного подарка укажи цену продажи."; err.hidden = false; return; }
+  if (!db){ err.textContent = "Хранилище недоступно: открой страницу, войдя в свой аккаунт Claude."; err.hidden = false; return; }
+  $("btn-save").disabled = true;
+  try {
+    if (editingId) await db.collection("deals").doc(editingId).set(d);
+    else await db.collection("deals").add(d);
+    $("form").hidden = true;
+  } catch (ex) {
+    err.textContent = ex && ex.code === "quota_exceeded" ? "Хранилище заполнено: удали старые сделки." : "Не получилось сохранить. Проверь соединение и попробуй ещё раз.";
+    err.hidden = false;
+  } finally { $("btn-save").disabled = false; }
+});
+
+$("rows").addEventListener("click", async e => {
+  const b = e.target.closest("button"); if (!b) return;
+  if (b.dataset.edit){ const d = deals.find(x => x.id === b.dataset.edit); if (d) openForm(d); }
+  if (b.dataset.del){
+    if (armedDelete !== b.dataset.del){ armedDelete = b.dataset.del; render(); setTimeout(() => { if (armedDelete === b.dataset.del){ armedDelete = null; render(); } }, 4000); return; }
+    armedDelete = null;
+    try { await db.collection("deals").doc(b.dataset.del).delete(); } catch { $("sync").textContent = "Не получилось удалить, попробуй ещё раз."; }
+  }
+});
+
+// ---------- настройки ----------
+function showSettings(){ $("set-budget").value = settings.budget; $("set-rate").value = settings.rate; }
+async function saveSettings(){
+  const budget = num($("set-budget").value), rate = num($("set-rate").value);
+  if (!(rate > 0) || (budget === settings.budget && rate === settings.rate)) { showSettings(); return; }
+  settings = {budget, rate}; render();
+  if (db) try { await db.doc("settings/main").set(settings); } catch { $("sync").textContent = "Настройки не сохранились."; }
+}
+$("set-budget").onchange = saveSettings; $("set-rate").onchange = saveSettings;
+
+// ---------- калькулятор ----------
+function calc(){
+  const buy = num($("c-buy").value) + num($("c-extra").value), fee = num($("c-fee").value) / 100, sell = num($("c-sell").value);
+  const net = sell * (1 - fee), profit = net - buy;
+  $("c-be").textContent = fmt(buy / (1 - fee));
+  $("c-net").textContent = fmt(net);
+  const p = $("c-profit"); p.textContent = signed(profit); p.className = "v " + cls(profit);
+  const r = $("c-roi"); r.textContent = buy > 0 ? signed(profit / buy * 100, 1) + "%" : "—"; r.className = "v " + cls(profit);
+  $("c-t15").textContent = fmt(buy * 1.15 / (1 - fee));
+}
+$("c-market").value = "portals"; $("c-fee").value = 5;
+$("c-market").onchange = e => { $("c-fee").value = MARKETS.find(m => m.id === e.target.value).fee; calc(); };
+["c-buy","c-extra","c-fee","c-sell"].forEach(id => $(id).addEventListener("input", calc));
+
+// ---------- вкладки ----------
+function route(){
+  const tab = ["deals","calc","guide"].includes(location.hash.slice(1)) ? location.hash.slice(1) : "deals";
+  for (const t of ["deals","calc","guide"]) $("tab-"+t).hidden = t !== tab;
+  document.querySelectorAll("nav a").forEach(a => a.dataset.tab === tab ? a.setAttribute("aria-current","page") : a.removeAttribute("aria-current"));
+}
+addEventListener("hashchange", route);
+
+// ---------- запуск ----------
+showSettings(); render(); calc(); route();
+(async () => {
+  db = window.claude && window.claude.use ? await window.claude.use("db") : null;
+  if (!db){ $("sync").textContent = "Сделки недоступны в этом окне. Калькулятор и памятка работают."; return; }
+  const slow = setTimeout(() => { $("sync").textContent = "Хранилище пока не отвечает, данные могут быть неполными."; }, 10000);
+  db.collection("deals").onSnapshot(snap => {
+    deals = snap.docs.map(d => ({...d.data(), id:d.id}));
+    if (!snap.metadata.fromCache){ clearTimeout(slow); $("sync").textContent = "Сохраняется автоматически"; }
+    render();
+  }, () => { clearTimeout(slow); $("sync").textContent = "Не удалось загрузить сделки. Обнови страницу позже."; });
+  db.doc("settings/main").onSnapshot(s => {
+    if (s.exists){ const v = s.data(); settings = {budget:num(v.budget), rate:num(v.rate) || 200}; showSettings(); render(); }
+  }, () => {});
+})();
+</script>
