@@ -165,5 +165,9 @@ def test_build_is_repeatable(built, tmp_path):
 
 
 def test_stride_property(imported):
+    import build_npc_test as b
+
     arm = next(o for o in imported.data.objects if o.type == "ARMATURE")
     assert arm.get("stride_m") == pytest.approx(0.70)
+    # В модель пишется шаг, с которым реально идёт походка (скорость земли / 2).
+    assert arm.get("stride_m") == pytest.approx(b.Gait.SPEED * b.K / 2.0)

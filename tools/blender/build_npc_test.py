@@ -766,12 +766,14 @@ def make_action(arm, name, frames, pose_fn):
 def build(out_path):
     scene.reset()
     arm = rig.build_humanoid(HEIGHT)
-    arm["stride_m"] = STRIDE_M
     joints = rig.joint_positions(HEIGHT)
     meshes = build_body(arm, joints)
 
     arm.animation_data_create()
     gait = Gait(joints)
+    # Шаг, с которым реально идёт походка (скорость земли масштабирована на K):
+    # NpcWalker берёт из него скорость, иначе при HEIGHT ≠ REF_HEIGHT ступни поедут.
+    arm["stride_m"] = gait.speed / 2.0
     make_action(arm, "Idle-loop", IDLE_FRAMES, idle_pose)
     make_action(arm, "Walk-loop", WALK_FRAMES, gait.pose)
     for pb in arm.pose.bones:
