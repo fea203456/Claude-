@@ -13,10 +13,18 @@ var target_version: int = SAVE_VERSION
 var migration_steps: Dictionary = SaveMigrations.STEPS
 
 var _providers: Dictionary = {}  # key -> Object
+## Разделы последней удачной загрузки: пишутся обратно под разделами провайдеров,
+## чтобы раздел без провайдера (например, из более новой подсистемы) не пропадал.
+var _loaded_sections: Dictionary = {}
 
 
 func register(key: String, provider: Object) -> void:
 	_providers[key] = provider
+
+
+## Забыть разделы последней загрузки (новая игра не наследует старую).
+func forget_loaded() -> void:
+	_loaded_sections = {}
 
 
 ## Есть что продолжать: основной файл или хотя бы .bak (load_game восстановит из него).
@@ -32,7 +40,9 @@ func save_game(path: String = SLOT_PATH) -> Error:
 	var game_version := str(ProjectSettings.get_setting("application/config/version", ""))
 	if game_version == "":
 		game_version = "0.1.0"
-	var data := {"save_version": target_version, "game_version": game_version}
+	var data := _loaded_sections.duplicate(true)
+	data["save_version"] = target_version
+	data["game_version"] = game_version
 	for key in _providers:
 		data[key] = (_providers[key] as Object).call("to_save")
 	var tmp := path + ".tmp"
@@ -59,6 +69,7 @@ func save_game(path: String = SLOT_PATH) -> Error:
 
 
 func load_game(path: String = SLOT_PATH) -> LoadResult:
+	_loaded_sections = {}
 	if not FileAccess.file_exists(path) and not FileAccess.file_exists(path + ".bak"):
 		return LoadResult.NO_FILE
 	var r := _try_load(path)
@@ -86,6 +97,7 @@ func _try_load(file_path: String) -> LoadResult:
 	for key in _providers:
 		if data.has(key) and typeof(data[key]) == TYPE_DICTIONARY:
 			(_providers[key] as Object).call("from_save", data[key])
+	_loaded_sections = data.duplicate(true)
 	return LoadResult.OK
 
 

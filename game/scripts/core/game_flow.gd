@@ -50,6 +50,7 @@ func has_save() -> bool:
 func new_game() -> void:
 	_resolve()
 	last_message = ""
+	saves.forget_loaded()
 	var w := _instance_world()
 	attach_world(w)
 	_reset_world_to_new_game()

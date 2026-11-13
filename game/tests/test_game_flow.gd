@@ -278,6 +278,25 @@ func test_continue_corrupt_starts_new_game() -> String:
 	return err
 
 
+## Новая игра после «Продолжить» не тащит в сохранение разделы старой игры.
+func test_new_game_drops_loaded_sections() -> String:
+	var flow := _flow()
+	_write(PATH, '{"save_version": 1, "time": {"day": 4, "minutes": 100}, "future": {"k": 1}}')
+	flow.continue_game()
+	flow.new_game()
+	var e := flow.save_now()
+	var save := _read_save()
+	var err := ""
+	if e != OK:
+		err = "save_now returned %d" % e
+	elif save.has("future"):
+		err = "section of the old game survived new_game: %s" % str(save["future"])
+	elif int(save["time"]["day"]) != 1:
+		err = "saved day %s" % save["time"]["day"]
+	_free_flow(flow)
+	return err
+
+
 func _hud_shows(w: Node, text: String) -> bool:
 	var hud := _node(w, "Hud") as Hud
 	return hud != null and hud.message_visible() and hud.message_text() == text

@@ -239,3 +239,40 @@ func test_third_save_overwrites_bak() -> String:
 	if not bak is Dictionary or bak["stub"]["v"] != "B":
 		return ".bak = %s" % _read(p + ".bak")
 	return "" if cur is Dictionary and cur["stub"]["v"] == "C" else "main = %s" % _read(p)
+
+
+## Раздел без провайдера (например, из будущей подсистемы) переживает загрузку и сохранение.
+func test_unknown_section_survives_save() -> String:
+	var p := DIR + "future.json"
+	var a := Stub.new()
+	var s := _svc(a)
+	_write(p, '{"save_version": 1, "stub": {"x": 1}, "future": {"seeds": [1, 2], "k": "v"}}')
+	var r := s.load_game(p)
+	a.data = {"x": 2}
+	var e := s.save_game(p)
+	s.free()
+	if r != SaveService.LoadResult.OK or e != OK:
+		return "load %d save %d" % [r, e]
+	var cur = JSON.parse_string(_read(p))
+	if not cur is Dictionary:
+		return "main unreadable"
+	if cur.get("future") != {"seeds": [1.0, 2.0], "k": "v"}:
+		return "future section lost or changed: %s" % str(cur.get("future"))
+	return "" if int(cur["stub"]["x"]) == 2 else "provider section not written: %s" % str(cur["stub"])
+
+
+## Неудачная загрузка не оставляет разделов от прошлой удачной.
+func test_failed_load_forgets_previous_sections() -> String:
+	var p := DIR + "forget.json"
+	var a := Stub.new()
+	var s := _svc(a)
+	_write(p, '{"save_version": 1, "future": {"k": 1}}')
+	s.load_game(p)
+	_write(p, "garbage")
+	var r := s.load_game(p)
+	var e := s.save_game(p)
+	s.free()
+	if r != SaveService.LoadResult.CORRUPT or e != OK:
+		return "load %d save %d" % [r, e]
+	var cur = JSON.parse_string(_read(p))
+	return "" if cur is Dictionary and not cur.has("future") else "stale section kept: %s" % _read(p)
