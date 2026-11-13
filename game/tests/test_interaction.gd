@@ -4,6 +4,19 @@ const KEYS := ["PROMPT_SLEEP", "PROMPT_TOO_EARLY", "DATE_FMT", "SEASON_0", "SEAS
 	"SEASON_3", "MENU_CONTINUE", "MENU_NEW_GAME", "MENU_QUIT", "MENU_RESUME", "MENU_TO_MAIN",
 	"SAVE_TOO_NEW", "SAVE_CORRUPT", "SAVE_RESTORED_BAK", "SAVE_FAILED"]
 
+## Запоминает, кого ему передали в prompt/interact.
+class Recorder extends Interactable:
+	var prompt_by: Node
+	var interact_by: Node
+
+	func prompt(by: Node) -> String:
+		prompt_by = by
+		return "REC"
+
+	func interact(by: Node) -> void:
+		interact_by = by
+
+
 func _root() -> Node:
 	return (Engine.get_main_loop() as SceneTree).root
 
@@ -194,4 +207,55 @@ func test_hud_message_hides_after_timeout() -> String:
 	if err == "" and hud.message_visible():
 		err = "message still visible after %s s" % Hud.MESSAGE_SECONDS
 	hud.free()
+	return err
+
+
+## Как в farm_test.tscn: корень сцены → Player → InteractionProbe, owner обоих — корень.
+func _scene_with_player() -> Array:
+	var scene := Node3D.new()
+	var hero := PlayerController.new()
+	var probe := InteractionProbe.new()
+	scene.add_child(hero)
+	hero.owner = scene
+	hero.add_child(probe)
+	probe.owner = scene
+	_root().add_child(scene)
+	return [scene, hero, probe]
+
+
+func test_probe_interact_passes_player() -> String:
+	var n := _scene_with_player()
+	var it := Recorder.new()
+	_root().add_child(it)
+	it.global_position = Vector3(0, 0, 1.0)
+	var ev := InputEventAction.new()
+	ev.action = "interact"
+	ev.pressed = true
+	(n[2] as InteractionProbe)._unhandled_input(ev)
+	var by := it.interact_by
+	var err := ""
+	if by != n[1]:
+		err = "interact(by) got %s, expected the player" % (by.name if by != null else "null")
+	it.free()
+	n[0].free()
+	return err
+
+
+func test_hud_prompt_passes_player() -> String:
+	var n := _scene_with_player()
+	var it := Recorder.new()
+	_root().add_child(it)
+	it.global_position = Vector3(0, 0, 1.0)
+	var hud := (load("res://scenes/ui/hud.tscn") as PackedScene).instantiate() as Hud
+	hud.use_global_clock = false
+	hud.probe = n[2]
+	_root().add_child(hud)
+	hud.refresh()
+	var by := it.prompt_by
+	var err := ""
+	if by != n[1]:
+		err = "prompt(by) got %s, expected the player" % (by.name if by != null else "null")
+	hud.free()
+	it.free()
+	n[0].free()
 	return err

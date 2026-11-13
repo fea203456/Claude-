@@ -6,11 +6,22 @@ const RADIUS := 1.5
 const MAX_ANGLE := deg_to_rad(60.0)
 
 
-## Направление взгляда героя в плоскости XZ: facing() владельца/родителя, иначе свой +Z.
+## Кто взаимодействует: ближайший предок-PlayerController, иначе родитель.
+## (owner не годится: в сцене это её корень, а не герой.)
+func actor() -> Node:
+	var n := get_parent()
+	while n != null:
+		if n is PlayerController:
+			return n
+		n = n.get_parent()
+	return get_parent()
+
+
+## Направление взгляда героя в плоскости XZ: facing() героя, иначе свой +Z.
 func _facing() -> Vector3:
-	for n in [owner, get_parent()]:
-		if n != null and n.has_method("facing"):
-			return n.facing()
+	var a := actor()
+	if a != null and a.has_method("facing"):
+		return a.facing()
 	var f := global_transform.basis.z
 	f.y = 0.0
 	return f.normalized() if f.length() > 0.0001 else Vector3.BACK
@@ -42,5 +53,5 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("interact"):
 		var it := current()
 		if it != null:
-			it.interact(owner if owner != null else get_parent())
+			it.interact(actor())
 			get_viewport().set_input_as_handled()

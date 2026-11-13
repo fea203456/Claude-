@@ -69,7 +69,7 @@ func refresh() -> void:
 	var it: Interactable = probe.current() if probe != null else null
 	_prompt.visible = it != null
 	if it != null:
-		_prompt.text = it.prompt(probe.owner if probe.owner != null else probe.get_parent())
+		_prompt.text = it.prompt(probe.actor())
 
 
 func _process(delta: float) -> void:
