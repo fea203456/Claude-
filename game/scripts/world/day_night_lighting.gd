@@ -5,6 +5,8 @@ extends Node
 
 @export var curve: DayNightCurve
 @export var sun: DirectionalLight3D
+@export var moon: DirectionalLight3D
+@export var ground_fog: FogMaterial
 @export var world_env: WorldEnvironment
 @export var clock_path: NodePath
 
@@ -14,6 +16,9 @@ var use_global_clock := true
 
 
 func _ready() -> void:
+	# Копия окружения: ресурс сцены/диска не мутируется рантаймом.
+	if world_env != null and world_env.environment != null:
+		world_env.environment = world_env.environment.duplicate(true)
 	_resolve_clock()
 
 
@@ -44,6 +49,15 @@ func apply(minutes: float) -> void:
 		sun.rotation_degrees.x = -float(s["sun_pitch_deg"])
 		sun.light_color = s["sun_color"]
 		sun.light_energy = float(s["sun_energy"])
+	if moon != null:
+		var me := float(s.get("moon_energy", 0.0))
+		if s.has("moon_pitch_deg"):
+			moon.rotation_degrees.x = -float(s["moon_pitch_deg"])
+		moon.light_color = s.get("moon_color", moon.light_color)
+		moon.light_energy = me
+		moon.visible = me > 0.0
+	if ground_fog != null and s.has("ground_fog_density"):
+		ground_fog.density = float(s["ground_fog_density"])
 	if world_env == null or world_env.environment == null:
 		return
 	var env := world_env.environment

@@ -2,7 +2,8 @@ class_name DayNightCurve
 extends Resource
 ## Ключи света по времени суток (minutes от 06:00), отсортированы по `minutes`.
 ## Каждый ключ: minutes, sun_pitch_deg, sun_color, sun_energy, ambient_energy,
-## sky_color, fog_density, fog_color.
+## sky_color, fog_density, fog_color; необязательные: moon_pitch_deg, moon_color,
+## moon_energy, ground_fog_density.
 
 @export var keys: Array[Dictionary] = []
 
