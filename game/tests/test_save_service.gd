@@ -15,15 +15,18 @@ class Stub extends RefCounted:
 		loaded += 1
 
 
+## Очищает DIR целиком, на любую глубину (сама DIR остаётся).
 func _clean() -> void:
 	DirAccess.make_dir_recursive_absolute(DIR)
-	var d := DirAccess.open(DIR)
-	for sub in d.get_directories():
-		for f in DirAccess.open(DIR + sub).get_files():
-			DirAccess.remove_absolute(DIR + sub + "/" + f)
-		DirAccess.remove_absolute(DIR + sub)
-	for f in d.get_files():
-		DirAccess.remove_absolute(DIR + f)
+	_remove_contents(DIR)
+
+
+func _remove_contents(dir: String) -> void:
+	for sub in DirAccess.get_directories_at(dir):
+		_remove_contents(dir + sub + "/")
+		DirAccess.remove_absolute(dir + sub)
+	for f in DirAccess.get_files_at(dir):
+		DirAccess.remove_absolute(dir + f)
 
 
 func _write(path: String, text: String) -> void:
@@ -67,6 +70,9 @@ func test_roundtrip() -> String:
 func test_creates_save_dir() -> String:
 	var p := DIR + "newdir/sub/slot.json"
 	var s := _svc(Stub.new())
+	if DirAccess.dir_exists_absolute(DIR + "newdir"):
+		s.free()
+		return "_clean left newdir/ from a previous run: the test would prove nothing"
 	var e := s.save_game(p)
 	s.free()
 	if e != OK:
