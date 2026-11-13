@@ -62,12 +62,12 @@ func step(input: Vector2, running: bool, camera_yaw: float, delta: float) -> voi
 	else:
 		_play("Idle", 1.0)
 
-func _play(anim: String, scale: float) -> void:
+func _play(anim: String, anim_speed: float) -> void:
 	if _anim == null or not _anim.has_animation(anim):
 		return
 	if _anim.current_animation != anim:
 		_anim.play(anim)
-	_anim.speed_scale = scale
+	_anim.speed_scale = anim_speed
 
 func to_save() -> Dictionary:
 	return {"pos": [global_position.x, global_position.y, global_position.z], "yaw": _yaw}

@@ -169,3 +169,16 @@ func test_save_roundtrip() -> String:
 	if not ok:
 		return "roundtrip mismatch %s vs %s" % [d, d2]
 	return ""
+
+## Скорость анимации Walk идёт за скоростью героя: бег — ×RUN_MULT.
+func test_walk_anim_speed_follows_run() -> String:
+	var w = await _world()
+	var p: PlayerController = w[-1]
+	p.step(Vector2(0, -1), true, 0.0, DT)
+	var ap := ModelUtils.find_player(p)
+	var cur := ap.current_animation if ap else "<no player>"
+	var sc := ap.speed_scale if ap else 0.0
+	_free(w)
+	if cur != "Walk":
+		return "animation %s, expected Walk" % cur
+	return "" if absf(sc - PlayerController.RUN_MULT) < 0.001 else "run speed_scale %f" % sc
