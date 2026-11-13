@@ -16,8 +16,11 @@ func _init() -> void:
 				methods.append(m["name"])
 		methods.sort()
 		for name in methods:
-			var msg: String = inst.call(name)
-			if msg == "":
+			var msg = inst.call(name)
+			if typeof(msg) != TYPE_STRING:
+				print("FAIL ", name, ": returned non-String (", type_string(typeof(msg)), "), probably a script error")
+				failures += 1
+			elif msg == "":
 				print("PASS ", name)
 			else:
 				print("FAIL ", name, ": ", msg)
