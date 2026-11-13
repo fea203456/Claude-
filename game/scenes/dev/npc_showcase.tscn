@@ -182,7 +182,7 @@ mesh = SubResource("stake_mesh")
 surface_material_override/0 = SubResource("wood_mat")
 
 [node name="Camera3D" type="Camera3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 0.8090, 0.5878, 0, -0.5878, 0.8090, 0, 4.702, 6.472)
+transform = Transform3D(1, 0, 0, 0, 0.7071, 0.7071, 0, -0.7071, 0.7071, 0, 5.66, 5.66)
 fov = 45.0
 current = true
 
