@@ -11,6 +11,15 @@ const DT := 1.0 / 60.0
 const HALF := 18.0
 
 
+## Считает записи сохранения.
+class CountingSaves extends SaveService:
+	var writes := 0
+
+	func save_game(path: String = SLOT_PATH) -> Error:
+		writes += 1
+		return super(path)
+
+
 func _tree() -> SceneTree:
 	return Engine.get_main_loop() as SceneTree
 
@@ -293,6 +302,55 @@ func test_new_game_drops_loaded_sections() -> String:
 		err = "section of the old game survived new_game: %s" % str(save["future"])
 	elif int(save["time"]["day"]) != 1:
 		err = "saved day %s" % save["time"]["day"]
+	_free_flow(flow)
+	return err
+
+
+## Новая игра → выход в меню → «Продолжить» в той же сессии: detach снял героя и камеру
+## с регистрации, а после повторного подключения сон пишет одно сохранение и все
+## подписки подключены ровно по разу.
+func test_reattach_after_quit_to_menu() -> String:
+	_clean()
+	var flow := GameFlow.new()
+	flow.clock = GameClock.new()
+	var saves := CountingSaves.new()
+	flow.saves = saves
+	flow.save_path = PATH
+	flow.new_game()
+	var first := flow.world
+	await _tree().physics_frame
+	flow.quit_to_menu()
+	var err := ""
+	if saves.writes != 1:
+		err = "quit_to_menu wrote %d saves" % saves.writes
+	elif saves.is_registered("player") or saves.is_registered("camera"):
+		err = "player/camera still registered after quit_to_menu"
+	elif not saves.is_registered("time"):
+		err = "time provider (clock autoload) was unregistered"
+	await _tree().process_frame
+	await _tree().process_frame
+	if err == "" and is_instance_valid(first):
+		err = "old farm not freed by the scene change"
+	flow.continue_game()
+	await _tree().physics_frame
+	var w := flow.world
+	var bed := _node(w, "Bed") as Bed
+	saves.writes = 0
+	flow.clock.minutes = 800
+	bed.sleep_requested.emit()
+	var save := _read_save()
+	if err != "":
+		pass
+	elif saves.writes != 1:
+		err = "sleep wrote %d saves" % saves.writes
+	elif bed.sleep_requested.get_connections().size() != 1:
+		err = "Bed.sleep_requested has %d connections" % bed.sleep_requested.get_connections().size()
+	elif flow.clock.collapsed.get_connections().size() != 1:
+		err = "clock.collapsed has %d connections" % flow.clock.collapsed.get_connections().size()
+	elif flow.clock.day_started.get_connections().size() != 1:
+		err = "clock.day_started has %d connections" % flow.clock.day_started.get_connections().size()
+	elif not (save.has("player") and save.has("camera")) or int(save["time"]["day"]) != 2:
+		err = "save after re-attach: %s" % str(save)
 	_free_flow(flow)
 	return err
 

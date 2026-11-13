@@ -2,7 +2,8 @@ class_name SaveService
 extends Node
 ## Сохранения: версия, миграции, атомарная запись (tmp → rename), предыдущее — .bak
 ## (битое предыдущее — в .corrupt, чтобы не затереть хороший .bak).
-## Ошибки возвращаются кодами, в лог движка ничего не пишется.
+## Ошибки возвращаются кодами; в лог движка пишется только warning об освобождённом
+## провайдере (его снимаем с регистрации, остальные разделы сохраняются как обычно).
 
 const SAVE_VERSION := 1
 const SLOT_PATH := "user://save/slot_1.json"
@@ -20,6 +21,15 @@ var _loaded_sections: Dictionary = {}
 
 func register(key: String, provider: Object) -> void:
 	_providers[key] = provider
+
+
+## Снять провайдера (например, узел мира перед его удалением). Неизвестный ключ — no-op.
+func unregister(key: String) -> void:
+	_providers.erase(key)
+
+
+func is_registered(key: String) -> bool:
+	return _providers.has(key)
 
 
 ## Забыть разделы последней загрузки (новая игра не наследует старую).
@@ -40,6 +50,7 @@ func save_game(path: String = SLOT_PATH) -> Error:
 	var game_version := str(ProjectSettings.get_setting("application/config/version", ""))
 	if game_version == "":
 		game_version = "0.1.0"
+	_prune_freed()
 	var data := _loaded_sections.duplicate(true)
 	data["save_version"] = target_version
 	data["game_version"] = game_version
@@ -87,6 +98,7 @@ func _try_load(file_path: String) -> LoadResult:
 	var data := _read_save(file_path)
 	if data.is_empty():
 		return LoadResult.CORRUPT
+	_prune_freed()
 	var version := int(data["save_version"])
 	if version > target_version:
 		return LoadResult.TOO_NEW
@@ -117,3 +129,11 @@ func _read_save(file_path: String) -> Dictionary:
 	if typeof(v) != TYPE_INT and typeof(v) != TYPE_FLOAT:
 		return {}
 	return data
+
+
+## Снимает с регистрации освобождённых провайдеров (узел мира удалили, не сняв его).
+func _prune_freed() -> void:
+	for key in _providers.keys():
+		if not is_instance_valid(_providers[key]):
+			push_warning("SaveService: provider '%s' was freed; unregistered" % key)
+			_providers.erase(key)

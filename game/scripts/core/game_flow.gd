@@ -121,6 +121,10 @@ func detach_world() -> void:
 			clock.day_started.disconnect(_on_day_started)
 	if is_instance_valid(_bed) and _bed.sleep_requested.is_connected(_on_sleep_requested):
 		_bed.sleep_requested.disconnect(_on_sleep_requested)
+	# Герой и камера уходят вместе с миром; часы — autoload, их раздел остаётся.
+	if saves != null:
+		saves.unregister("player")
+		saves.unregister("camera")
 	world = null
 	_hud = null
 	_player = null

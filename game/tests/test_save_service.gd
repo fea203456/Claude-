@@ -15,6 +15,15 @@ class Stub extends RefCounted:
 		loaded += 1
 
 
+## Провайдер-узел: его можно освободить, не сняв с регистрации.
+class NodeStub extends Node:
+	func to_save() -> Dictionary:
+		return {"n": 1}
+
+	func from_save(_d: Dictionary) -> void:
+		pass
+
+
 ## Очищает DIR целиком, на любую глубину (сама DIR остаётся).
 func _clean() -> void:
 	DirAccess.make_dir_recursive_absolute(DIR)
@@ -276,3 +285,61 @@ func test_failed_load_forgets_previous_sections() -> String:
 		return "load %d save %d" % [r, e]
 	var cur = JSON.parse_string(_read(p))
 	return "" if cur is Dictionary and not cur.has("future") else "stale section kept: %s" % _read(p)
+
+
+## Освобождённый провайдер молча (warning) снимается, остальные разделы пишутся.
+func test_freed_provider_pruned_on_save() -> String:
+	var p := DIR + "freed.json"
+	var a := Stub.new()
+	a.data = {"x": 3}
+	var s := _svc(a)
+	var node := NodeStub.new()
+	s.register("node", node)
+	node.free()
+	var e := s.save_game(p)
+	var e2 := s.save_game(p)
+	s.free()
+	if e != OK or e2 != OK:
+		return "save returned %d, %d" % [e, e2]
+	var cur = JSON.parse_string(_read(p))
+	if not cur is Dictionary:
+		return "no save written"
+	if cur.has("node"):
+		return "freed provider section written: %s" % str(cur["node"])
+	return "" if int(cur["stub"]["x"]) == 3 else "live provider section missing: %s" % _read(p)
+
+
+func test_freed_provider_pruned_on_load() -> String:
+	var p := DIR + "freedload.json"
+	var a := Stub.new()
+	var s := _svc(a)
+	var node := NodeStub.new()
+	s.register("node", node)
+	node.free()
+	_write(p, '{"save_version": 1, "node": {"n": 2}, "stub": {"x": 4}}')
+	var r := s.load_game(p)
+	s.free()
+	if r != SaveService.LoadResult.OK:
+		return "load result %d" % r
+	return "" if int(a.data.get("x", -1)) == 4 else "live provider not loaded: %s" % str(a.data)
+
+
+func test_unregister_removes_provider() -> String:
+	var p := DIR + "unreg.json"
+	var a := Stub.new()
+	var s := _svc(a)
+	var node := NodeStub.new()
+	s.register("node", node)
+	var before := s.is_registered("node")
+	s.unregister("node")
+	s.unregister("never_registered")
+	var after := s.is_registered("node")
+	node.free()
+	var e := s.save_game(p)
+	s.free()
+	if not before or after:
+		return "is_registered before=%s after=%s" % [before, after]
+	var cur = JSON.parse_string(_read(p))
+	if e != OK or not cur is Dictionary:
+		return "save returned %d" % e
+	return "" if not cur.has("node") else "unregistered provider written"
