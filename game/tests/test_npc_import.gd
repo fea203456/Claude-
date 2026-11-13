@@ -107,3 +107,26 @@ func test_height_in_godot() -> String:
 	if absf(box.size.y - 1.75) > 0.05:
 		return "height %f" % box.size.y
 	return ""
+
+func _stride_meta(n: Node) -> Variant:
+	if n.has_meta("extras"):
+		var ex = n.get_meta("extras")
+		if ex is Dictionary and ex.has("stride_m"):
+			return ex["stride_m"]
+	for c in n.get_children():
+		var r = _stride_meta(c)
+		if r != null:
+			return r
+	return null
+
+func test_stride_in_extras() -> String:
+	var inst := _inst()
+	if inst == null:
+		return "cannot load " + GLB
+	var v = _stride_meta(inst)
+	inst.free()
+	if v == null:
+		return "no node with meta extras.stride_m"
+	if absf(float(v) - 0.70) > 0.005:
+		return "extras.stride_m %s, expected 0.70" % str(v)
+	return ""
