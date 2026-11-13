@@ -195,3 +195,47 @@ func test_has_save_with_only_bak() -> String:
 	if none:
 		return "has_save true without any file"
 	return "" if with_bak else "has_save false although .bak exists"
+
+
+## Битый основной файл не затирает хороший .bak: после восстановления первое сохранение
+## уводит битый файл в .corrupt, а .bak остаётся прежним.
+func test_corrupt_main_does_not_replace_good_bak() -> String:
+	var p := DIR + "keepbak.json"
+	var a := Stub.new()
+	var s := _svc(a)
+	var good := '{"save_version": 1, "stub": {"x": 7}}'
+	_write(p, "{{ garbage")
+	_write(p + ".bak", good)
+	var r := s.load_game(p)
+	a.data = {"x": 8}
+	var e := s.save_game(p)
+	s.free()
+	if r != SaveService.LoadResult.RESTORED_FROM_BAK:
+		return "load result %d" % r
+	if e != OK:
+		return "save returned %d" % e
+	if _read(p + ".bak") != good:
+		return ".bak replaced: %s" % _read(p + ".bak")
+	if _read(p + ".corrupt") != "{{ garbage":
+		return "corrupt main not kept as .corrupt: '%s'" % _read(p + ".corrupt")
+	var cur = JSON.parse_string(_read(p))
+	return "" if cur is Dictionary and int(cur["stub"]["x"]) == 8 else "main wrong: %s" % _read(p)
+
+
+## Третье сохранение перезаписывает .bak предыдущим: A, B, C → .bak == B.
+func test_third_save_overwrites_bak() -> String:
+	var p := DIR + "third.json"
+	var a := Stub.new()
+	var s := _svc(a)
+	var errs := []
+	for v in ["A", "B", "C"]:
+		a.data = {"v": v}
+		errs.append(s.save_game(p))
+	s.free()
+	if errs != [OK, OK, OK]:
+		return "save results %s" % str(errs)
+	var bak = JSON.parse_string(_read(p + ".bak"))
+	var cur = JSON.parse_string(_read(p))
+	if not bak is Dictionary or bak["stub"]["v"] != "B":
+		return ".bak = %s" % _read(p + ".bak")
+	return "" if cur is Dictionary and cur["stub"]["v"] == "C" else "main = %s" % _read(p)

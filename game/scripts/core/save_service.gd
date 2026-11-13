@@ -1,6 +1,7 @@
 class_name SaveService
 extends Node
-## Сохранения: версия, миграции, атомарная запись (tmp → rename), предыдущее — .bak.
+## Сохранения: версия, миграции, атомарная запись (tmp → rename), предыдущее — .bak
+## (битое предыдущее — в .corrupt, чтобы не затереть хороший .bak).
 ## Ошибки возвращаются кодами, в лог движка ничего не пишется.
 
 const SAVE_VERSION := 1
@@ -48,7 +49,10 @@ func save_game(path: String = SLOT_PATH) -> Error:
 	if dir == null:
 		return DirAccess.get_open_error()
 	if FileAccess.file_exists(path):
-		err = dir.rename(path.get_file(), path.get_file() + ".bak")
+		# В .bak уходит только читаемое сохранение: битый основной (например, после
+		# RESTORED_FROM_BAK) не должен затереть хороший .bak — он откладывается в .corrupt.
+		var aside := ".bak" if not _read_save(path).is_empty() else ".corrupt"
+		err = dir.rename(path.get_file(), path.get_file() + aside)
 		if err != OK:
 			return err
 	return dir.rename(tmp.get_file(), path.get_file())
@@ -69,19 +73,10 @@ func load_game(path: String = SLOT_PATH) -> LoadResult:
 
 ## OK / TOO_NEW / CORRUPT (NO_FILE трактуется как CORRUPT вызывающим).
 func _try_load(file_path: String) -> LoadResult:
-	var f := FileAccess.open(file_path, FileAccess.READ)
-	if f == null:
+	var data := _read_save(file_path)
+	if data.is_empty():
 		return LoadResult.CORRUPT
-	var text := f.get_as_text()
-	f.close()
-	var json := JSON.new()
-	if json.parse(text) != OK or typeof(json.data) != TYPE_DICTIONARY:
-		return LoadResult.CORRUPT
-	var data: Dictionary = json.data
-	var v = data.get("save_version", null)
-	if typeof(v) != TYPE_INT and typeof(v) != TYPE_FLOAT:
-		return LoadResult.CORRUPT
-	var version := int(v)
+	var version := int(data["save_version"])
 	if version > target_version:
 		return LoadResult.TOO_NEW
 	if version < target_version:
@@ -92,3 +87,21 @@ func _try_load(file_path: String) -> LoadResult:
 		if data.has(key) and typeof(data[key]) == TYPE_DICTIONARY:
 			(_providers[key] as Object).call("from_save", data[key])
 	return LoadResult.OK
+
+
+## Содержимое файла, если это похоже на сохранение (JSON-словарь с числовым
+## save_version), иначе пустой словарь. Ничего не пишет в лог.
+func _read_save(file_path: String) -> Dictionary:
+	var f := FileAccess.open(file_path, FileAccess.READ)
+	if f == null:
+		return {}
+	var text := f.get_as_text()
+	f.close()
+	var json := JSON.new()
+	if json.parse(text) != OK or typeof(json.data) != TYPE_DICTIONARY:
+		return {}
+	var data: Dictionary = json.data
+	var v = data.get("save_version", null)
+	if typeof(v) != TYPE_INT and typeof(v) != TYPE_FLOAT:
+		return {}
+	return data
