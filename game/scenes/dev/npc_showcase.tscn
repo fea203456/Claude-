@@ -8,11 +8,11 @@
 size = Vector2(30, 30)
 
 [sub_resource type="StandardMaterial3D" id="ground_mat"]
-albedo_color = Color(0.0742, 0.0685, 0.0612, 1)
+albedo_color = Color(0.227, 0.212, 0.196, 1)
 roughness = 0.85
 
 [sub_resource type="StandardMaterial3D" id="wood_mat"]
-albedo_color = Color(0.1023, 0.0684, 0.0421, 1)
+albedo_color = Color(0.353, 0.29, 0.227, 1)
 roughness = 0.85
 
 [sub_resource type="CylinderMesh" id="stake_mesh"]
@@ -29,11 +29,12 @@ environment = ExtResource("3")
 
 [node name="Sun" type="DirectionalLight3D" parent="."]
 transform = Transform3D(0.866, 0.0868, -0.4924, 0, 0.9848, 0.1736, 0.5, -0.1504, 0.8529, 0, 5, 0)
-light_color = Color(1, 0.68, 0.42, 1)
-light_energy = 4.0
+light_color = Color(1, 0.7, 0.46, 1)
+light_energy = 2.1
 light_volumetric_fog_energy = 0.2
 shadow_enabled = true
 directional_shadow_max_distance = 40.0
+directional_shadow_blend_splits = true
 
 [node name="Ground" type="MeshInstance3D" parent="."]
 mesh = SubResource("ground_mesh")
