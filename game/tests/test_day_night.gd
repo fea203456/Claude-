@@ -94,10 +94,63 @@ func test_apply_sets_nodes() -> String:
 	return "" if ok else msg
 
 
+func _rig(curve: DayNightCurve) -> Array:
+	var root := (Engine.get_main_loop() as SceneTree).root
+	var env := Environment.new()
+	env.volumetric_fog_enabled = true
+	var we := WorldEnvironment.new()
+	we.environment = env
+	var sun := DirectionalLight3D.new()
+	var l := DayNightLighting.new()
+	l.curve = curve
+	l.sun = sun
+	l.world_env = we
+	root.add_child(we)
+	root.add_child(sun)
+	root.add_child(l)
+	return [l, sun, we, env]
+
+
+func _free_rig(r: Array) -> void:
+	for n in [r[0], r[1], r[2]]:
+		(n as Node).queue_free()
+
+
 func test_idles_without_clock() -> String:
 	var root := (Engine.get_main_loop() as SceneTree).root
-	var l := DayNightLighting.new()
-	root.add_child(l)
+	if root.get_node_or_null("Clock") != null or root.get_node_or_null("/root/Clock") != null:
+		return "a Clock is reachable; cannot test idling"
+	var r := _rig(load(CURVE_PATH) as DayNightCurve)
+	var l: DayNightLighting = r[0]
+	var sun: DirectionalLight3D = r[1]
+	var env: Environment = r[3]
+	var e0 := sun.light_energy
+	var f0 := env.volumetric_fog_density
+	var rot0 := sun.rotation_degrees
 	l._process(0.1)
-	l.queue_free()
-	return ""
+	var ok: bool = l.clock == null and is_equal_approx(sun.light_energy, e0) \
+		and is_equal_approx(env.volumetric_fog_density, f0) and sun.rotation_degrees == rot0
+	_free_rig(r)
+	return "" if ok else "lighting changed without a clock"
+
+
+func test_process_uses_injected_clock() -> String:
+	var curve := load(CURVE_PATH) as DayNightCurve
+	var r := _rig(curve)
+	var l: DayNightLighting = r[0]
+	var sun: DirectionalLight3D = r[1]
+	var env: Environment = r[3]
+	var clock := GameClock.new()
+	clock.advance(500.5)
+	l.clock = clock
+	l._process(0.0)
+	var s := curve.sample(clock.minutes_f())
+	var ok: bool = absf(clock.minutes_f() - 500.5) < 1e-4 \
+		and is_equal_approx(sun.light_energy, float(s["sun_energy"])) \
+		and is_equal_approx(sun.rotation_degrees.x, -float(s["sun_pitch_deg"])) \
+		and is_equal_approx(env.volumetric_fog_density, float(s["fog_density"])) \
+		and is_equal_approx(env.ambient_light_energy, float(s["ambient_energy"]))
+	var msg := "energy=%s want %s" % [sun.light_energy, s["sun_energy"]]
+	clock.free()
+	_free_rig(r)
+	return "" if ok else msg
