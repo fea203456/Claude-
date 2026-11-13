@@ -56,7 +56,7 @@ func _initialize() -> void:
 		for name in methods:
 			total += 1
 			var before: int = errors.snapshot()[0]
-			var msg = inst.call(name)
+			var msg = await inst.call(name)
 			var after: Array = errors.snapshot()
 			if after[0] > before:
 				print("FAIL ", name, ": %d engine/script error(s) logged, last: %s" % [after[0] - before, after[1]])

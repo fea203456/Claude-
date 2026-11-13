@@ -18,11 +18,11 @@ func _ready() -> void:
 		return
 	_model = model_scene.instantiate() as Node3D
 	add_child(_model)
-	var found := _find_stride(_model)
+	var found := ModelUtils.find_stride(_model)
 	_stride_from_model = found > 0.0
 	if _stride_from_model:
 		_stride_m = found
-	var ap := _find_player(_model)
+	var ap := ModelUtils.find_player(_model)
 	if ap and ap.has_animation("Walk"):
 		ap.play("Walk")
 	_place()
@@ -48,24 +48,3 @@ func _place() -> void:
 	var tangent := Vector3(-sin(_angle), 0.0, cos(_angle))
 	if is_inside_tree():
 		look_at(global_position + tangent, Vector3.UP, true)
-
-## Ищет extras.stride_m в узле и потомках; -1.0, если не нашёл.
-func _find_stride(n: Node) -> float:
-	if n.has_meta("extras"):
-		var ex = n.get_meta("extras")
-		if ex is Dictionary and ex.has("stride_m") and float(ex["stride_m"]) > 0.0:
-			return float(ex["stride_m"])
-	for c in n.get_children():
-		var r := _find_stride(c)
-		if r > 0.0:
-			return r
-	return -1.0
-
-func _find_player(n: Node) -> AnimationPlayer:
-	if n is AnimationPlayer:
-		return n
-	for c in n.get_children():
-		var r := _find_player(c)
-		if r:
-			return r
-	return null
