@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="DayNightCurve" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/day_night_curve.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+keys = Array[Dictionary]([
+{"minutes": 0, "sun_pitch_deg": 8.0, "sun_color": Color(1, 0.66, 0.42, 1), "sun_energy": 1.4, "ambient_energy": 0.5, "sky_color": Color(0.55, 0.42, 0.4, 1), "fog_density": 0.02, "fog_color": Color(0.78, 0.62, 0.55, 1)},
+{"minutes": 360, "sun_pitch_deg": 50.0, "sun_color": Color(1, 0.96, 0.88, 1), "sun_energy": 2.4, "ambient_energy": 0.8, "sky_color": Color(0.4, 0.55, 0.75, 1), "fog_density": 0.015, "fog_color": Color(0.72, 0.78, 0.84, 1)},
+{"minutes": 780, "sun_pitch_deg": 10.0, "sun_color": Color(1, 0.45, 0.18, 1), "sun_energy": 1.2, "ambient_energy": 0.45, "sky_color": Color(0.62, 0.3, 0.18, 1), "fog_density": 0.03, "fog_color": Color(0.7, 0.42, 0.28, 1)},
+{"minutes": 900, "sun_pitch_deg": -10.0, "sun_color": Color(0.25, 0.32, 0.55, 1), "sun_energy": 0.05, "ambient_energy": 0.22, "sky_color": Color(0.03, 0.04, 0.09, 1), "fog_density": 0.06, "fog_color": Color(0.1, 0.14, 0.26, 1)},
+{"minutes": 1200, "sun_pitch_deg": -10.0, "sun_color": Color(0.22, 0.28, 0.5, 1), "sun_energy": 0.05, "ambient_energy": 0.2, "sky_color": Color(0.02, 0.03, 0.07, 1), "fog_density": 0.08, "fog_color": Color(0.08, 0.11, 0.22, 1)}
+])

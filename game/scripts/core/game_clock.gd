@@ -63,6 +63,11 @@ func _start_day(new_day: int, collapsed_flag: bool) -> void:
 	day_started.emit(day)
 
 
+## Игровые минуты с дробной частью — для плавного света.
+func minutes_f() -> float:
+	return float(minutes) + _fraction
+
+
 func clock_minute() -> int:
 	return (_DAY_START_CLOCK + minutes) % 1440
 

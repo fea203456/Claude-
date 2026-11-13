@@ -144,3 +144,12 @@ func test_save_roundtrip() -> String:
 	a.free()
 	b.free()
 	return "" if ok else "mismatch"
+
+
+func test_minutes_f_includes_fraction() -> String:
+	var c := GameClock.new()
+	c.advance(10.5)
+	var ok: bool = c.minutes == 10 and absf(c.minutes_f() - 10.5) < 1e-4
+	var msg := "minutes_f=%f" % c.minutes_f()
+	c.free()
+	return "" if ok else msg
