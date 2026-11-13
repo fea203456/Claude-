@@ -1,6 +1,6 @@
-[gd_scene load_steps=19 format=3]
+[gd_scene load_steps=20 format=3]
 
-[ext_resource type="Environment" path="res://scenes/dev/dusk_environment.tres" id="1"]
+[ext_resource type="Environment" path="res://world/farm_environment.tres" id="1"]
 [ext_resource type="Script" path="res://scripts/world/day_night_lighting.gd" id="2"]
 [ext_resource type="Resource" path="res://world/day_night_curve.tres" id="3"]
 [ext_resource type="PackedScene" path="res://scenes/world/house.tscn" id="4"]
@@ -10,6 +10,12 @@
 [ext_resource type="Script" path="res://scripts/player/camera_rig.gd" id="8"]
 [ext_resource type="PackedScene" path="res://scenes/ui/hud.tscn" id="9"]
 [ext_resource type="PackedScene" path="res://scenes/ui/pause_menu.tscn" id="10"]
+
+[sub_resource type="FogMaterial" id="ground_fog_mat"]
+density = 0.6
+albedo = Color(0.62, 0.66, 0.7, 1)
+height_falloff = 1.2
+edge_fade = 0.2
 
 [sub_resource type="PlaneMesh" id="ground_mesh"]
 size = Vector2(40, 40)
@@ -58,10 +64,21 @@ shadow_enabled = true
 directional_shadow_max_distance = 40.0
 directional_shadow_blend_splits = true
 
-[node name="DayNightLighting" type="Node" parent="." node_paths=PackedStringArray("sun", "world_env")]
+[node name="Moon" type="DirectionalLight3D" parent="."]
+transform = Transform3D(-0.866, 0.0868, 0.4924, 0, 0.9848, -0.1736, -0.5, -0.1504, -0.8529, 0, 5, 0)
+light_color = Color(0.55, 0.65, 0.85, 1)
+light_energy = 0.0
+light_volumetric_fog_energy = 0.2
+shadow_enabled = true
+directional_shadow_max_distance = 40.0
+visible = false
+
+[node name="DayNightLighting" type="Node" parent="." node_paths=PackedStringArray("sun", "moon", "world_env")]
 script = ExtResource("2")
 curve = ExtResource("3")
 sun = NodePath("../Sun")
+moon = NodePath("../Moon")
+ground_fog = SubResource("ground_fog_mat")
 world_env = NodePath("../WorldEnvironment")
 
 [node name="Ground" type="StaticBody3D" parent="."]
@@ -96,6 +113,30 @@ shape = SubResource("fence_ew")
 [node name="West" type="CollisionShape3D" parent="Fence/FenceBody"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18, 0.65, 0)
 shape = SubResource("fence_ew")
+
+[node name="FogBandN" type="FogVolume" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, -23)
+size = Vector3(56, 3, 10)
+shape = 3
+material = SubResource("ground_fog_mat")
+
+[node name="FogBandS" type="FogVolume" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 23)
+size = Vector3(56, 3, 10)
+shape = 3
+material = SubResource("ground_fog_mat")
+
+[node name="FogBandE" type="FogVolume" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 23, 1.5, 0)
+size = Vector3(10, 3, 36)
+shape = 3
+material = SubResource("ground_fog_mat")
+
+[node name="FogBandW" type="FogVolume" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -23, 1.5, 0)
+size = Vector3(10, 3, 36)
+shape = 3
+material = SubResource("ground_fog_mat")
 
 [node name="House" parent="." instance=ExtResource("4")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -9)

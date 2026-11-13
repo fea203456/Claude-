@@ -18,6 +18,9 @@ Game="*res://scripts/core/game_flow.gd"
 [rendering]
 
 renderer/rendering_method="forward_plus"
+environment/volumetric_fog/volume_size=128
+environment/volumetric_fog/volume_depth=128
+environment/volumetric_fog/use_filter=1
 
 [internationalization]
 
