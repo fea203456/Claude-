@@ -153,3 +153,19 @@ func test_minutes_f_includes_fraction() -> String:
 	var msg := "minutes_f=%f" % c.minutes_f()
 	c.free()
 	return "" if ok else msg
+
+
+## Подписчики (свет, ночь) должны пересчитаться после загрузки или новой игры:
+## time_loaded приходит в конце from_save и new_game, уже с новыми значениями.
+func test_time_loaded_after_from_save_and_new_game() -> String:
+	var c := GameClock.new()
+	var seen := []
+	c.time_loaded.connect(func() -> void: seen.append([c.day, c.minutes, c.is_night()]))
+	c.from_save({"day": 3, "minutes": 1020})  # 23:00
+	c.new_game()
+	c.free()
+	if seen.size() != 2:
+		return "time_loaded fired %d times, expected 2" % seen.size()
+	if seen[0] != [3, 1020, true]:
+		return "after from_save saw %s" % str(seen[0])
+	return "" if seen[1] == [1, 0, false] else "after new_game saw %s" % str(seen[1])

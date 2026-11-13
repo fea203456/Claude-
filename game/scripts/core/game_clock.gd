@@ -9,6 +9,9 @@ signal night_started()
 signal day_started(day: int)
 signal season_changed(season: int)
 signal collapsed()
+## Время задано целиком (from_save / new_game), а не прошло: подписчики пересчитывают
+## состояние (например, ночь после «Продолжить» в 23:00 — night_started не придёт).
+signal time_loaded()
 
 const DAY_MINUTES := 1200
 const NIGHT_AT := 840
@@ -109,6 +112,7 @@ func new_game() -> void:
 	minutes = 0
 	_fraction = 0.0
 	collapsed_last_night = false
+	time_loaded.emit()
 
 
 func to_save() -> Dictionary:
@@ -120,3 +124,4 @@ func from_save(d: Dictionary) -> void:
 	minutes = clampi(int(d.get("minutes", 0)), 0, DAY_MINUTES - 1)
 	collapsed_last_night = bool(d.get("collapsed_last_night", false))
 	_fraction = 0.0
+	time_loaded.emit()
