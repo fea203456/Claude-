@@ -3,10 +3,17 @@ config_version=5
 
 [application]
 
-run/main_scene="res://scenes/dev/npc_showcase.tscn"
+run/main_scene="res://scenes/ui/main_menu.tscn"
 
 config/name="Увядающий край"
+config/version="0.1.0"
 config/features=PackedStringArray("4.5", "Forward Plus")
+
+[autoload]
+
+Clock="*res://scripts/core/game_clock.gd"
+Saves="*res://scripts/core/save_service.gd"
+Game="*res://scripts/core/game_flow.gd"
 
 [rendering]
 
