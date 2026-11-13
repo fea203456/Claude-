@@ -1,6 +1,7 @@
 extends SceneTree
 
-func _init() -> void:
+func _initialize() -> void:
+	await process_frame  # root enters the tree only after _initialize
 	var failures := 0
 	var dir := DirAccess.open("res://tests/")
 	var files: Array[String] = []

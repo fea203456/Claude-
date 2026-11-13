@@ -3,6 +3,8 @@ config_version=5
 
 [application]
 
+run/main_scene="res://scenes/dev/npc_showcase.tscn"
+
 config/name="Увядающий край"
 config/features=PackedStringArray("4.5", "Forward Plus")
 
