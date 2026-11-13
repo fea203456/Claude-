@@ -14,7 +14,7 @@ renderer/rendering_method="forward_plus"
 
 [internationalization]
 
-locale/test="ru"
+locale/fallback="ru"
 locale/translations=PackedStringArray("res://locale/strings.ru.translation", "res://locale/strings.en.translation")
 
 [input]

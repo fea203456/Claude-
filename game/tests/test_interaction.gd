@@ -169,3 +169,7 @@ func test_hud_shows_time_and_prompt() -> String:
 	rig[0].free()
 	clock.free()
 	return err
+
+func test_locale_fallback_is_ru() -> String:
+	var v = ProjectSettings.get_setting("internationalization/locale/fallback")
+	return "" if v == "ru" else "fallback = %s" % str(v)
