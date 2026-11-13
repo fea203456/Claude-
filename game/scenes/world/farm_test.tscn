@@ -1,4 +1,4 @@
-[gd_scene load_steps=20 format=3]
+[gd_scene load_steps=22 format=3]
 
 [ext_resource type="Environment" path="res://world/farm_environment.tres" id="1"]
 [ext_resource type="Script" path="res://scripts/world/day_night_lighting.gd" id="2"]
@@ -13,16 +13,24 @@
 
 [sub_resource type="FogMaterial" id="ground_fog_mat"]
 density = 0.6
-albedo = Color(0.62, 0.66, 0.7, 1)
-height_falloff = 1.2
-edge_fade = 0.2
+albedo = Color(0.82, 0.85, 0.9, 1)
+emission = Color(0.02, 0.025, 0.035, 1)
+height_falloff = 1.6
+edge_fade = 0.6
 
 [sub_resource type="PlaneMesh" id="ground_mesh"]
 size = Vector2(40, 40)
 
 [sub_resource type="StandardMaterial3D" id="ground_mat"]
-albedo_color = Color(0.227, 0.212, 0.196, 1)
+albedo_color = Color(0.235, 0.225, 0.215, 1)
 roughness = 0.85
+
+[sub_resource type="PlaneMesh" id="field_mesh"]
+size = Vector2(160, 160)
+
+[sub_resource type="StandardMaterial3D" id="field_mat"]
+albedo_color = Color(0.12, 0.125, 0.105, 1)
+roughness = 0.95
 
 [sub_resource type="BoxShape3D" id="ground_shape"]
 size = Vector3(40, 0.2, 40)
@@ -59,16 +67,16 @@ environment = ExtResource("1")
 transform = Transform3D(0.866, 0.0868, -0.4924, 0, 0.9848, 0.1736, 0.5, -0.1504, 0.8529, 0, 5, 0)
 light_color = Color(1, 0.7, 0.46, 1)
 light_energy = 2.1
-light_volumetric_fog_energy = 0.2
+light_volumetric_fog_energy = 0.5
 shadow_enabled = true
 directional_shadow_max_distance = 40.0
 directional_shadow_blend_splits = true
 
 [node name="Moon" type="DirectionalLight3D" parent="."]
-transform = Transform3D(-0.866, 0.0868, 0.4924, 0, 0.9848, -0.1736, -0.5, -0.1504, -0.8529, 0, 5, 0)
+transform = Transform3D(-1, 0, 0, 0, 0.9848, -0.1736, 0, -0.1736, -0.9848, 0, 5, 0)
 light_color = Color(0.55, 0.65, 0.85, 1)
 light_energy = 0.0
-light_volumetric_fog_energy = 0.2
+light_volumetric_fog_energy = 0.6
 shadow_enabled = true
 directional_shadow_max_distance = 40.0
 visible = false
@@ -86,6 +94,11 @@ world_env = NodePath("../WorldEnvironment")
 [node name="GroundMesh" type="MeshInstance3D" parent="Ground"]
 mesh = SubResource("ground_mesh")
 surface_material_override/0 = SubResource("ground_mat")
+
+[node name="Field" type="MeshInstance3D" parent="Ground"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.02, 0)
+mesh = SubResource("field_mesh")
+surface_material_override/0 = SubResource("field_mat")
 
 [node name="GroundShape" type="CollisionShape3D" parent="Ground"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.1, 0)
