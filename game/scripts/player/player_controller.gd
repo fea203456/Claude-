@@ -78,3 +78,7 @@ func from_save(d: Dictionary) -> void:
 	_yaw = float(d.get("yaw", 0.0))
 	if _model:
 		_model.rotation.y = _yaw
+
+## Куда смотрит герой (плоскость XZ); при yaw = 0 — на +Z.
+func facing() -> Vector3:
+	return Vector3(sin(_yaw), 0.0, cos(_yaw))

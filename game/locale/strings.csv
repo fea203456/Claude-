@@ -1,0 +1,16 @@
+keys,ru,en
+PROMPT_SLEEP,E — лечь спать,E — go to sleep
+PROMPT_TOO_EARLY,Ещё рано спать,Too early to sleep
+DATE_FMT,"День {day}, {season}","Day {day}, {season}"
+SEASON_0,Весна,Spring
+SEASON_1,Лето,Summer
+SEASON_2,Осень,Autumn
+SEASON_3,Зима,Winter
+MENU_CONTINUE,Продолжить,Continue
+MENU_NEW_GAME,Новая игра,New game
+MENU_QUIT,Выход,Quit
+MENU_RESUME,Вернуться в игру,Resume
+MENU_TO_MAIN,В главное меню,Main menu
+SAVE_TOO_NEW,Сохранение от более новой версии игры,Save is from a newer game version
+SAVE_CORRUPT,Сохранение повреждено — начата новая игра,Save is corrupted — started a new game
+SAVE_RESTORED_BAK,Сохранение было повреждено — загружена предыдущая копия,Save was corrupted — the previous copy was loaded

@@ -12,6 +12,11 @@ config/features=PackedStringArray("4.5", "Forward Plus")
 
 renderer/rendering_method="forward_plus"
 
+[internationalization]
+
+locale/test="ru"
+locale/translations=PackedStringArray("res://locale/strings.ru.translation", "res://locale/strings.en.translation")
+
 [input]
 
 move_forward={
