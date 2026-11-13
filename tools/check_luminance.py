@@ -6,12 +6,14 @@
 контраст YHIGH − YLOW (90-й минус 10-й перцентиль Y). Печатает строку на кадр.
 
 Код выхода:
-  0 — порядок яркости day_1200 > day_1900 > day_2300 и day_0600 > day_2300 соблюдён
+  0 — порядок яркости day_1200 > day_1900 > day_2300, day_0600 > day_2300 и
+      day_1900 > day_2100, day_1900 > day_0100, day_2100 >= day_2300 соблюдён
       и контраст day_0600 и day_1200 не ниже N (без --min-contrast контраст не проверяется);
   1 — порядок или контраст нарушен;
   2 — не удалось измерить: нет файла, ffmpeg упал или не выдал значение, неверные аргументы.
 Только стандартная библиотека.
 """
+import math
 import os
 import re
 import subprocess
@@ -21,7 +23,7 @@ NAMES = ("day_0600", "day_1200", "day_1900", "day_2100", "day_2300", "day_0100")
 CONTRAST_NAMES = ("day_0600", "day_1200")
 STATS = ("YAVG", "YLOW", "YHIGH")
 STAT_RE = {k: re.compile(r"lavfi\.signalstats\.%s=([0-9.]+)" % k) for k in STATS}
-USAGE = "usage: check_luminance.py <dir> [--min-contrast N]"
+USAGE = "usage: check_luminance.py <dir> [--min-contrast N]  (N — конечное число)"
 
 
 class MeasureError(Exception):
@@ -63,6 +65,8 @@ def parse_args(argv: list[str]):
             min_c = float(args[i + 1])
         except ValueError:
             return None
+        if not math.isfinite(min_c):
+            return None
         del args[i:i + 2]
     if len(args) != 1 or args[0].startswith("--"):
         return None
@@ -93,6 +97,12 @@ def main(argv: list[str]) -> int:
     fails = []
     if not ((y["day_1200"] > y["day_1900"] > y["day_2300"]) and y["day_0600"] > y["day_2300"]):
         fails.append("need day_1200 > day_1900 > day_2300 and day_0600 > day_2300")
+    # Анти-цель «ночь светлее заката» — для каждого ночного кадра, не только 23:00.
+    if not (y["day_1900"] > y["day_2100"] and y["day_1900"] > y["day_0100"]):
+        fails.append("need day_1900 > day_2100 and day_1900 > day_0100")
+    # Сумерки не темнее глубокой ночи.
+    if not y["day_2100"] >= y["day_2300"]:
+        fails.append("need day_2100 >= day_2300")
     if min_c is not None:
         low = [n for n in CONTRAST_NAMES if c[n] < min_c]
         if low:

@@ -165,7 +165,42 @@ func test_sun_never_up_at_night() -> String:
 		if not is_zero_approx(float(s["sun_energy"])):
 			return "sun energy at %d: %s" % [m, s["sun_energy"]]
 		m += 5
-	return ""
+	# Закат 780…840: кривая опускает солнце за горизонт раньше, чем гасит энергию;
+	# свет на сцене не должен светить из-под горизонта (pitch < 0 ⇒ energy == 0).
+	var r := _rig(curve)
+	var l: DayNightLighting = r[0]
+	var sun: DirectionalLight3D = r[1]
+	var msg := ""
+	m = 780
+	while m <= 840 and msg == "":
+		l.apply(float(m))
+		var pitch := float(curve.sample(float(m))["sun_pitch_deg"])
+		if pitch < 0.0 and not is_zero_approx(sun.light_energy):
+			msg = "sun below horizon at %d (pitch %s) with energy %s" % [m, pitch, sun.light_energy]
+		m += 1
+	_free_rig(r)
+	return msg
+
+
+func test_sun_hidden_when_off() -> String:
+	var curve := load(CURVE_PATH) as DayNightCurve
+	var r := _rig(curve)
+	var l: DayNightLighting = r[0]
+	var sun: DirectionalLight3D = r[1]
+	var msg := ""
+	l.apply(360.0)
+	if not sun.visible:
+		msg = "sun hidden at noon"
+	if msg == "":
+		l.apply(1000.0)
+		if sun.visible:
+			msg = "sun visible at night (energy %s)" % sun.light_energy
+	if msg == "":
+		l.apply(360.0)
+		if not sun.visible:
+			msg = "sun not shown again in the morning"
+	_free_rig(r)
+	return msg
 
 
 func test_moon_only_at_night() -> String:
