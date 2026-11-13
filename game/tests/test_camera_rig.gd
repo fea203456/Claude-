@@ -145,3 +145,25 @@ func test_save_roundtrip() -> String:
 	for x in n + n2:
 		x.free()
 	return "" if ok else msg
+
+## Соглашение о yaw при ненулевом повороте: yaw_index 2 (90°) ставит камеру на +X от цели,
+## а «вперёд» героя при этом yaw направлено от камеры.
+func test_nonzero_yaw_convention() -> String:
+	var n := _rig()
+	var r: CameraRig = n[0]
+	r.from_save({"yaw_index": 2, "distance": 8.0})
+	r.update(1.0)
+	var off := _cam(r).global_position - _look(n[1])
+	var p := PlayerController.new()
+	_root().add_child(p)
+	p.step(Vector2(0, -1), false, r.yaw(), 1.0 / 60.0)
+	var fwd := p.facing()
+	p.free()
+	for x in n:
+		x.free()
+	var off_xz := Vector3(off.x, 0.0, off.z).normalized()
+	var fwd_xz := Vector3(fwd.x, 0.0, fwd.z).normalized()
+	if off.x <= 0.5 * 8.0 * cos(deg_to_rad(45.0)):
+		return "camera not on +X at yaw_index 2: offset %s" % off
+	var dot := fwd_xz.dot(off_xz)
+	return "" if dot < -0.95 else "forward %s does not point away from camera (dot %f)" % [fwd_xz, dot]
