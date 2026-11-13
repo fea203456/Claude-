@@ -8,7 +8,7 @@
 size = Vector2(30, 30)
 
 [sub_resource type="StandardMaterial3D" id="ground_mat"]
-albedo_color = Color(0.0421, 0.0370, 0.0319, 1)
+albedo_color = Color(0.0742, 0.0685, 0.0612, 1)
 roughness = 0.85
 
 [sub_resource type="StandardMaterial3D" id="wood_mat"]
@@ -29,9 +29,9 @@ environment = ExtResource("3")
 
 [node name="Sun" type="DirectionalLight3D" parent="."]
 transform = Transform3D(0.866, 0.0868, -0.4924, 0, 0.9848, 0.1736, 0.5, -0.1504, 0.8529, 0, 5, 0)
-light_color = Color(1, 0.62, 0.34, 1)
-light_energy = 2.4
-light_volumetric_fog_energy = 1.5
+light_color = Color(1, 0.68, 0.42, 1)
+light_energy = 4.0
+light_volumetric_fog_energy = 0.2
 shadow_enabled = true
 directional_shadow_max_distance = 40.0
 
