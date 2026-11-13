@@ -14,3 +14,4 @@ MENU_TO_MAIN,В главное меню,Main menu
 SAVE_TOO_NEW,Сохранение от более новой версии игры,Save is from a newer game version
 SAVE_CORRUPT,Сохранение повреждено — начата новая игра,Save is corrupted — started a new game
 SAVE_RESTORED_BAK,Сохранение было повреждено — загружена предыдущая копия,Save was corrupted — the previous copy was loaded
+SAVE_FAILED,Не удалось сохранить игру,Could not save the game

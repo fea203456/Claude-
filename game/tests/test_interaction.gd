@@ -2,7 +2,7 @@ extends RefCounted
 
 const KEYS := ["PROMPT_SLEEP", "PROMPT_TOO_EARLY", "DATE_FMT", "SEASON_0", "SEASON_1", "SEASON_2",
 	"SEASON_3", "MENU_CONTINUE", "MENU_NEW_GAME", "MENU_QUIT", "MENU_RESUME", "MENU_TO_MAIN",
-	"SAVE_TOO_NEW", "SAVE_CORRUPT", "SAVE_RESTORED_BAK"]
+	"SAVE_TOO_NEW", "SAVE_CORRUPT", "SAVE_RESTORED_BAK", "SAVE_FAILED"]
 
 func _root() -> Node:
 	return (Engine.get_main_loop() as SceneTree).root
@@ -175,3 +175,23 @@ func test_hud_shows_time_and_prompt() -> String:
 func test_locale_fallback_is_ru() -> String:
 	var v = ProjectSettings.get_setting("internationalization/locale/fallback")
 	return "" if v == "ru" else "fallback = %s" % str(v)
+
+
+func test_hud_message_hides_after_timeout() -> String:
+	var hud := (load("res://scenes/ui/hud.tscn") as PackedScene).instantiate() as Hud
+	hud.use_global_clock = false
+	_root().add_child(hud)
+	var err := ""
+	if hud.message_visible():
+		err = "message visible at start"
+	hud.show_message("MSG")
+	if err == "" and not (hud.message_visible() and hud.message_text() == "MSG"):
+		err = "message not shown"
+	hud._process(Hud.MESSAGE_SECONDS - 0.5)
+	if err == "" and not hud.message_visible():
+		err = "message hid too early"
+	hud._process(1.0)
+	if err == "" and hud.message_visible():
+		err = "message still visible after %s s" % Hud.MESSAGE_SECONDS
+	hud.free()
+	return err

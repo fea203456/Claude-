@@ -22,7 +22,7 @@ func _root() -> Node:
 func _clean() -> void:
 	DirAccess.make_dir_recursive_absolute(DIR)
 	for f in [PATH, PATH + ".bak", PATH + ".tmp"]:
-		if FileAccess.file_exists(f):
+		if FileAccess.file_exists(f) or DirAccess.dir_exists_absolute(f):
 			DirAccess.remove_absolute(f)
 
 
@@ -272,7 +272,36 @@ func test_continue_corrupt_starts_new_game() -> String:
 		err = "not a new game: day=%d minutes=%d" % [flow.clock.day, flow.clock.minutes]
 	elif not _near(_player(w).global_position, (_node(w, "SpawnStart") as Node3D).global_position):
 		err = "player not at SpawnStart"
+	elif not _hud_shows(w, flow.last_message):
+		err = "HUD does not show the corrupt-save message"
 	_free_flow(flow)
+	return err
+
+
+func _hud_shows(w: Node, text: String) -> bool:
+	var hud := _node(w, "Hud") as Hud
+	return hud != null and hud.message_visible() and hud.message_text() == text
+
+
+## Запись не удалась (на месте .tmp — папка): сон не теряет ошибку молча.
+func test_failed_autosave_reports() -> String:
+	var flow := _flow()
+	var w: Node = await _world(flow)
+	DirAccess.make_dir_recursive_absolute(PATH + ".tmp")
+	flow.clock.minutes = 800
+	(_node(w, "Bed") as Bed).sleep_requested.emit()
+	var want := TranslationServer.translate("SAVE_FAILED")
+	var err := ""
+	if want == "SAVE_FAILED":
+		err = "SAVE_FAILED is not translated"
+	elif flow.last_message != want:
+		err = "last_message = '%s'" % flow.last_message
+	elif not _hud_shows(w, want):
+		err = "HUD does not show the save failure"
+	elif flow.clock.day != 2:
+		err = "sleep itself did not happen"
+	_free_flow(flow)
+	_clean()
 	return err
 
 

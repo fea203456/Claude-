@@ -14,6 +14,7 @@ var last_message: String = ""
 ## Подключённый мир (ферма) или null, пока мы в меню.
 var world: Node
 
+var _hud: Hud
 var _player: PlayerController
 var _camera: CameraRig
 var _bed: Bed
@@ -68,11 +69,11 @@ func continue_game() -> void:
 			return
 		SaveService.LoadResult.CORRUPT:
 			_reset_world_to_new_game()
-			last_message = tr("SAVE_CORRUPT")
+			post_message(tr("SAVE_CORRUPT"))
 		SaveService.LoadResult.NO_FILE:
 			_reset_world_to_new_game()
 		SaveService.LoadResult.RESTORED_FROM_BAK:
-			last_message = tr("SAVE_RESTORED_BAK")
+			post_message(tr("SAVE_RESTORED_BAK"))
 	set_paused(false)
 	_make_current(w)
 
@@ -92,9 +93,9 @@ func attach_world(w: Node) -> void:
 		var node := w.find_child(n, true, false)
 		if node != null:
 			node.set("clock", clock)
-	var hud := w.find_child("Hud", true, false) as Hud
-	if hud != null and _player != null:
-		hud.probe = _player.find_child("InteractionProbe", true, false) as InteractionProbe
+	_hud = w.find_child("Hud", true, false) as Hud
+	if _hud != null and _player != null:
+		_hud.probe = _player.find_child("InteractionProbe", true, false) as InteractionProbe
 	if _player != null and _camera != null:
 		_player.camera_yaw_provider = _camera.yaw
 	var pause_menu := w.find_child("PauseMenu", true, false) as PauseMenu
@@ -120,6 +121,7 @@ func detach_world() -> void:
 	if is_instance_valid(_bed) and _bed.sleep_requested.is_connected(_on_sleep_requested):
 		_bed.sleep_requested.disconnect(_on_sleep_requested)
 	world = null
+	_hud = null
 	_player = null
 	_camera = null
 	_bed = null
@@ -135,14 +137,33 @@ func save_now() -> Error:
 	return saves.save_game(save_path)
 
 
+## Сохранение из игрового цикла (сон, обморок, выход): ошибку не теряем — warning в лог
+## (не push_error: это не сбой движка) и сообщение игроку. Без мира — ничего.
+func _autosave() -> void:
+	if not is_instance_valid(world):
+		return
+	var e := save_now()
+	if e != OK:
+		push_warning("GameFlow: save to %s failed: %s (%d)" % [save_path, error_string(e), e])
+		post_message(tr("SAVE_FAILED"))
+
+
+## last_message; если мир подключён — ещё и в HUD на несколько секунд.
+func post_message(text: String) -> void:
+	last_message = text
+	if is_instance_valid(_hud):
+		_hud.show_message(text)
+
+
 func set_paused(p: bool) -> void:
 	_tree().paused = p
 	if clock != null:
 		clock.paused = p
 
 
+## После неудачного сохранения всё равно уходим в меню: оно покажет last_message.
 func quit_to_menu() -> void:
-	save_now()
+	_autosave()
 	set_paused(false)
 	detach_world()
 	if clock != null:
@@ -153,7 +174,7 @@ func quit_to_menu() -> void:
 func _notification(what: int) -> void:
 	# Выход окном: auto_accept_quit закроет игру сам, здесь только сохранение.
 	if what == NOTIFICATION_WM_CLOSE_REQUEST:
-		save_now()
+		_autosave()
 
 
 func _instance_world() -> Node:
@@ -191,7 +212,7 @@ func _move_to_bed() -> void:
 func _on_sleep_requested() -> void:
 	if clock.sleep():
 		_move_to_bed()
-		save_now()
+		_autosave()
 
 
 ## collapsed приходит до перехода на новый день, поэтому само действие — в day_started,
@@ -205,4 +226,4 @@ func _on_day_started(_day: int) -> void:
 		return
 	_collapse_pending = false
 	_move_to_bed()
-	save_now()
+	_autosave()

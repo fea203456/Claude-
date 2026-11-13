@@ -1,6 +1,9 @@
 class_name Hud
 extends CanvasLayer
-## HUD: время, дата и подсказка взаимодействия. Без часов/зонда молча простаивает.
+## HUD: время, дата, подсказка взаимодействия и временное сообщение (например, о
+## неудачном сохранении). Без часов/зонда молча простаивает.
+
+const MESSAGE_SECONDS := 5.0
 
 var clock: GameClock
 var probe: InteractionProbe
@@ -10,6 +13,9 @@ var use_global_clock := true
 @onready var _time: Label = $Margin/Top/TimeLabel
 @onready var _date: Label = $Margin/Top/DateLabel
 @onready var _prompt: Label = $PromptLabel
+@onready var _message: Label = $MessageLabel
+
+var _message_left := 0.0
 
 
 static func format_time(clock_minute: int) -> String:
@@ -25,6 +31,7 @@ static func format_date(day_of_season: int, season: int) -> String:
 
 func _ready() -> void:
 	_prompt.visible = false
+	_message.visible = false
 	refresh()
 
 
@@ -34,6 +41,21 @@ func time_text() -> String:
 
 func prompt_visible() -> bool:
 	return _prompt.visible
+
+
+## Уже переведённый текст на MESSAGE_SECONDS секунд.
+func show_message(text: String) -> void:
+	_message.text = text
+	_message.visible = text != ""
+	_message_left = MESSAGE_SECONDS if text != "" else 0.0
+
+
+func message_visible() -> bool:
+	return _message.visible
+
+
+func message_text() -> String:
+	return _message.text
 
 
 func refresh() -> void:
@@ -50,5 +72,9 @@ func refresh() -> void:
 		_prompt.text = it.prompt(probe.owner if probe.owner != null else probe.get_parent())
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
+	if _message_left > 0.0:
+		_message_left -= delta
+		if _message_left <= 0.0:
+			_message.visible = false
 	refresh()

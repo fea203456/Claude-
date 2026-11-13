@@ -41,3 +41,18 @@ grow_horizontal = 2
 grow_vertical = 0
 horizontal_alignment = 1
 theme_override_font_sizes/font_size = 24
+
+[node name="MessageLabel" type="Label" parent="."]
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -320.0
+offset_top = 24.0
+offset_right = 320.0
+offset_bottom = 64.0
+grow_horizontal = 2
+horizontal_alignment = 1
+autowrap_mode = 3
+auto_translate_mode = 2
+theme_override_colors/font_color = Color(0.741, 0.655, 0.58, 1)
+theme_override_font_sizes/font_size = 22
