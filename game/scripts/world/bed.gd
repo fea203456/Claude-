@@ -5,6 +5,8 @@ extends Interactable
 signal sleep_requested()
 
 var clock: GameClock
+## false — не брать /root/Clock, если часы не переданы (тесты «без часов» при autoload).
+var use_global_clock := true
 
 
 func _ready() -> void:
@@ -13,7 +15,7 @@ func _ready() -> void:
 
 
 func _resolve_clock() -> void:
-	if clock == null:
+	if clock == null and use_global_clock:
 		clock = get_node_or_null("/root/Clock") as GameClock
 
 

@@ -102,6 +102,7 @@ func _rig(curve: DayNightCurve) -> Array:
 	we.environment = env
 	var sun := DirectionalLight3D.new()
 	var l := DayNightLighting.new()
+	l.use_global_clock = false  # autoload /root/Clock не должен подменять «нет часов»
 	l.curve = curve
 	l.sun = sun
 	l.world_env = we
@@ -117,9 +118,6 @@ func _free_rig(r: Array) -> void:
 
 
 func test_idles_without_clock() -> String:
-	var root := (Engine.get_main_loop() as SceneTree).root
-	if root.get_node_or_null("Clock") != null or root.get_node_or_null("/root/Clock") != null:
-		return "a Clock is reachable; cannot test idling"
 	var r := _rig(load(CURVE_PATH) as DayNightCurve)
 	var l: DayNightLighting = r[0]
 	var sun: DirectionalLight3D = r[1]

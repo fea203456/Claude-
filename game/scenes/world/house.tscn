@@ -1,8 +1,9 @@
-[gd_scene load_steps=9 format=3]
+[gd_scene load_steps=11 format=3]
 
 [ext_resource type="PackedScene" path="res://assets/props/house_stub/house_stub.glb" id="1"]
 [ext_resource type="PackedScene" path="res://assets/props/bed/bed.glb" id="2"]
 [ext_resource type="Script" path="res://scripts/world/bed.gd" id="3"]
+[ext_resource type="Script" path="res://scripts/world/house_interior.gd" id="4"]
 
 [sub_resource type="BoxShape3D" id="bed_area"]
 size = Vector3(2.4, 1.2, 2.6)
@@ -18,6 +19,9 @@ size = Vector3(2.45, 2.6, 0.2)
 
 [sub_resource type="BoxShape3D" id="wall_lintel"]
 size = Vector3(1.1, 0.5, 0.2)
+
+[sub_resource type="BoxShape3D" id="interior"]
+size = Vector3(5.6, 2.5, 4.6)
 
 [node name="House" type="Node3D"]
 
@@ -61,3 +65,12 @@ shape = SubResource("bed_area")
 
 [node name="BedSpawn" type="Marker3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.77, 0, -0.57)
+
+[node name="Interior" type="Area3D" parent="."]
+collision_layer = 0
+monitorable = false
+script = ExtResource("4")
+
+[node name="Shape" type="CollisionShape3D" parent="Interior"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.25, 0)
+shape = SubResource("interior")

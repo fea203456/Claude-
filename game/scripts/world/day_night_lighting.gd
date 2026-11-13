@@ -9,6 +9,8 @@ extends Node
 @export var clock_path: NodePath
 
 var clock: GameClock
+## false — не брать /root/Clock, если часы не переданы (тесты «без часов» при autoload).
+var use_global_clock := true
 
 
 func _ready() -> void:
@@ -20,7 +22,7 @@ func _resolve_clock() -> void:
 		return
 	if not clock_path.is_empty():
 		clock = get_node_or_null(clock_path) as GameClock
-	if clock == null:
+	if clock == null and use_global_clock:
 		clock = get_node_or_null("/root/Clock") as GameClock
 
 

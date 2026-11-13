@@ -72,3 +72,38 @@ func test_house_nodes() -> String:
 		msg = "no StaticBody3D collision"
 	house.free()
 	return msg
+
+## Крыша скрыта, пока герой в доме (камера 45° иначе не видит интерьер), и снова видна снаружи.
+func test_roof_hides_while_player_inside() -> String:
+	var tree := Engine.get_main_loop() as SceneTree
+	var floor_body := _floor()
+	var house := (load(HOUSE) as PackedScene).instantiate() as Node3D
+	house.position = HOUSE_POS
+	_root().add_child(house)
+	var roof := house.find_child("HouseRoof", true, false) as Node3D
+	var p := PlayerController.new()
+	_root().add_child(p)
+	p.global_position = house.to_global(Vector3(0.0, 0.0, 6.0))
+	await tree.physics_frame
+	await tree.physics_frame
+	var err := ""
+	if roof == null:
+		err = "no HouseRoof"
+	elif not roof.visible:
+		err = "roof hidden while the player is outside"
+	if err == "":
+		p.global_position = house.to_global(Vector3(-1.0, 0.0, -0.5))
+		await tree.physics_frame
+		await tree.physics_frame
+		if roof.visible:
+			err = "roof visible while the player is inside"
+	if err == "":
+		p.global_position = house.to_global(Vector3(0.0, 0.0, 6.0))
+		await tree.physics_frame
+		await tree.physics_frame
+		if not roof.visible:
+			err = "roof stays hidden after the player left"
+	p.free()
+	house.free()
+	floor_body.free()
+	return err

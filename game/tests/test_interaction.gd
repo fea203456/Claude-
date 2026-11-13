@@ -102,6 +102,7 @@ func test_bed_prompt_sleep() -> String:
 
 func test_bed_without_clock_idles() -> String:
 	var bed := Bed.new()
+	bed.use_global_clock = false
 	_root().add_child(bed)
 	bed.interact(null)
 	var p := bed.prompt(null)
@@ -138,6 +139,7 @@ func test_strings_have_ru_and_en() -> String:
 
 func test_hud_idles_without_clock_and_probe() -> String:
 	var hud := (load("res://scenes/ui/hud.tscn") as PackedScene).instantiate() as Hud
+	hud.use_global_clock = false
 	_root().add_child(hud)
 	await (Engine.get_main_loop() as SceneTree).process_frame
 	hud.free()

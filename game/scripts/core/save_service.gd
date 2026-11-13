@@ -18,8 +18,9 @@ func register(key: String, provider: Object) -> void:
 	_providers[key] = provider
 
 
+## Есть что продолжать: основной файл или хотя бы .bak (load_game восстановит из него).
 func has_save(path: String = SLOT_PATH) -> bool:
-	return FileAccess.file_exists(path)
+	return FileAccess.file_exists(path) or FileAccess.file_exists(path + ".bak")
 
 
 func save_game(path: String = SLOT_PATH) -> Error:

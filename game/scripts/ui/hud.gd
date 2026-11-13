@@ -4,6 +4,8 @@ extends CanvasLayer
 
 var clock: GameClock
 var probe: InteractionProbe
+## false — не брать /root/Clock, если часы не переданы (тесты «без часов» при autoload).
+var use_global_clock := true
 
 @onready var _time: Label = $Margin/Top/TimeLabel
 @onready var _date: Label = $Margin/Top/DateLabel
@@ -35,7 +37,7 @@ func prompt_visible() -> bool:
 
 
 func refresh() -> void:
-	if clock == null:
+	if clock == null and use_global_clock:
 		clock = get_node_or_null("/root/Clock") as GameClock
 	if probe == null:
 		probe = get_tree().root.find_child("InteractionProbe", true, false) as InteractionProbe

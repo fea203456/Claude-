@@ -177,3 +177,15 @@ func test_missing_section_not_applied() -> String:
 	if r != SaveService.LoadResult.OK:
 		return "result %d" % r
 	return "" if a.loaded == 0 else "from_save called"
+
+
+func test_has_save_with_only_bak() -> String:
+	var p := DIR + "onlybak.json"
+	var s := _svc(Stub.new())
+	var none := s.has_save(p)
+	_write(p + ".bak", '{"save_version": 1}')
+	var with_bak := s.has_save(p)
+	s.free()
+	if none:
+		return "has_save true without any file"
+	return "" if with_bak else "has_save false although .bak exists"
