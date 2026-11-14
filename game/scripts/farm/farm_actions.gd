@@ -64,11 +64,12 @@ static func _rule(state: FarmState, inv: Inventory, cell: Vector2i) -> Dictionar
 		if inv.can_water <= 0:
 			return _result(&"none", &"can_empty", "PROMPT_CAN_EMPTY")
 		return _result(&"water", &"", "PROMPT_WATER")
-	# 4. мотыга
+	# 4. мотыга: отказ — только на клетке вплотную к полю, дальше мотыга молчит
 	if tool == &"hoe" and not tilled:
 		if state.in_field(cell):
 			return _result(&"till", &"", "PROMPT_TILL")
-		return _result(&"none", &"cant_till", "PROMPT_CANT_TILL")
+		if state.bounds.grow(1).has_point(cell):
+			return _result(&"none", &"cant_till", "PROMPT_CANT_TILL")
 	# 5. неспелое и неизвестное растение
 	if state.is_unknown(cell):
 		return _result(&"none", &"unknown", "PROMPT_UNKNOWN_PLANT")

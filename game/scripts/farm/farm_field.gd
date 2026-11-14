@@ -14,8 +14,8 @@ const FRAME_Y_TILLED := 0.115
 const FRAME_Y_GROUND := 0.006
 const MARKER_Y := 0.45
 ## Сухая почва: 100% — тёмно-бурая, 0% — пепельно-серая (sRGB). Политая — тот же цвет × WET.
-const SOIL_RICH := Color(0.3, 0.19, 0.11)
-const SOIL_SPENT := Color(0.32, 0.31, 0.3)
+const SOIL_RICH := Color(0.34, 0.21, 0.12)
+const SOIL_SPENT := Color(0.34, 0.33, 0.32)
 const WET := 0.6
 
 var state: FarmState: set = set_state

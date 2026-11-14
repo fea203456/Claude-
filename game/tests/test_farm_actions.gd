@@ -45,16 +45,32 @@ func test_till() -> String:
 			return "perform did not till"
 		return "")
 
-func test_till_outside_field_refused() -> String:
+## Клетка вплотную к полю (вне bounds, но в bounds.grow(1)): отказ с подсказкой.
+func test_till_next_to_field_refused() -> String:
 	var f := _farm()
 	var inv := _inv([_hoe()])
 	return _ru(func():
-		var r := FarmActions.resolve(f, inv, Vector2i(10, 3))
-		if r["kind"] != &"none" or r["reason"] != &"cant_till" or r["text"] != "Здесь нельзя копать":
-			return "resolve: %s" % [r]
-		if FarmActions.perform(f, inv, Vector2i(10, 3)) != &"none" or f.is_tilled(Vector2i(10, 3)):
-			return "tilled outside"
+		# правее, левее, южнее, севернее и по диагонали от угла поля Rect2i(-6, 2, 12, 8)
+		for cell in [Vector2i(6, 3), Vector2i(-7, 5), Vector2i(0, 10), Vector2i(0, 1), Vector2i(-7, 1)]:
+			var r := FarmActions.resolve(f, inv, cell)
+			if r["kind"] != &"none" or r["reason"] != &"cant_till" or r["text"] != "Здесь нельзя копать":
+				return "resolve %s: %s" % [cell, r]
+			if FarmActions.perform(f, inv, cell) != &"none" or f.is_tilled(cell):
+				return "tilled outside at %s" % cell
 		return "")
+
+
+## Дальше от поля мотыга молчит: ни действия, ни подсказки (иначе отказ висит на всей ферме).
+func test_hoe_far_from_field_no_prompt() -> String:
+	var f := _farm()
+	var inv := _inv([_hoe()])
+	for cell in [Vector2i(10, 3), Vector2i(7, 5), Vector2i(0, 0), Vector2i(0, -4), Vector2i(-8, 11)]:
+		var r := FarmActions.resolve(f, inv, cell)
+		if r["kind"] != &"none" or r["reason"] != &"" or r["text"] != "":
+			return "resolve %s: %s" % [cell, r]
+		if FarmActions.perform(f, inv, cell) != &"none" or f.is_tilled(cell):
+			return "tilled far away at %s" % cell
+	return ""
 
 func test_hoe_on_tilled_cell_does_nothing() -> String:
 	var f := _farm(_plot())
