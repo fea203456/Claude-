@@ -140,12 +140,12 @@ func test_harvest_reduces_fertility_and_empties() -> String:
 	return ""
 
 func test_harvest_uses_fertility_before_reduction() -> String:
-	# boneroot: база 3; при 60 -> 2 (а после снижения на 20 было бы 40 -> 1)
-	var f := _with_plot(60.0, "boneroot", false, 5.0)
+	# boneroot: база 3, усталость 20; при 100 -> 3 (после снижения было бы 80 -> floor(2.7) = 2)
+	var f := _with_plot(100.0, "boneroot", false, 5.0)
 	var r := f.harvest(C)
-	if r.get("produce") != 2 or r.get("seeds") != 2:
+	if r.get("produce") != 3 or r.get("seeds") != 2:
 		return "result %s" % [r]
-	if f.plot(C)["fertility"] != 40.0:
+	if f.plot(C)["fertility"] != 80.0:
 		return "fertility %s" % f.plot(C)["fertility"]
 	return ""
 
