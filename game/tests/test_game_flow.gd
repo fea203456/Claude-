@@ -567,6 +567,11 @@ func test_attach_hands_out_farm_and_inventory() -> String:
 	var w := (load(FARM) as PackedScene).instantiate()
 	var names := ["FarmField", "FarmInteractor", "Well", "Hotbar"]
 	for n in names:
+		# Настоящие узлы фермы заменяются приёмниками, записывающими всё, что им раздали.
+		var real := w.find_child(n, true, false)
+		if real != null:
+			real.get_parent().remove_child(real)
+			real.free()
 		var r := Receiver.new()
 		r.name = n
 		w.add_child(r)

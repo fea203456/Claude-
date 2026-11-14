@@ -1,9 +1,19 @@
 class_name InteractionProbe
 extends Node3D
 ## Ребёнок героя: выбирает ближайший Interactable в радиусе и в конусе перед героем.
+## Если такого нет — обращается к запасному обработчику (клетка поля перед героем).
 
 const RADIUS := 1.5
 const MAX_ANGLE := deg_to_rad(60.0)
+
+## Запасной обработчик с prompt(by), can_interact(by), interact(by); пусто — соседний
+## узел FarmInteractor, если он есть.
+var fallback: Node
+
+
+func _ready() -> void:
+	if fallback == null and get_parent() != null:
+		fallback = get_parent().get_node_or_null("FarmInteractor")
 
 
 ## Кто взаимодействует: ближайший предок-PlayerController, иначе родитель.
@@ -49,9 +59,24 @@ func current() -> Interactable:
 	return best
 
 
+## Уже переведённая подсказка: найденного Interactable, иначе запасного обработчика.
+func prompt_text() -> String:
+	var it := current()
+	if it != null:
+		return it.prompt(actor())
+	if is_instance_valid(fallback):
+		return fallback.prompt(actor())
+	return ""
+
+
+## Одно нажатие — одно действие: Interactable в досягаемости всегда важнее поля.
 func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed("interact"):
-		var it := current()
-		if it != null:
-			it.interact(actor())
-			get_viewport().set_input_as_handled()
+	if not event.is_action_pressed("interact"):
+		return
+	var it := current()
+	if it != null:
+		it.interact(actor())
+		get_viewport().set_input_as_handled()
+	elif is_instance_valid(fallback) and fallback.can_interact(actor()):
+		fallback.interact(actor())
+		get_viewport().set_input_as_handled()

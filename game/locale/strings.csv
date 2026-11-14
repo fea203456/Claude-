@@ -38,3 +38,5 @@ PROMPT_NO_ROOM,Нет места,No room
 PROMPT_GROWING_FMT,{crop} — {stage},{crop} — {stage}
 PROMPT_UNKNOWN_PLANT,Неизвестное растение,Unknown plant
 SOIL_FMT,Земля: {pct}%,Soil: {pct}%
+PROMPT_FILL_CAN,E — набрать воды,E — draw water
+PROMPT_CAN_FULL,Лейка полна,The can is full

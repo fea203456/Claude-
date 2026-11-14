@@ -43,6 +43,10 @@ func prompt_visible() -> bool:
 	return _prompt.visible
 
 
+func prompt_text() -> String:
+	return _prompt.text
+
+
 ## Уже переведённый текст на MESSAGE_SECONDS секунд.
 func show_message(text: String) -> void:
 	_message.text = text
@@ -66,10 +70,8 @@ func refresh() -> void:
 	if clock != null:
 		_time.text = format_time(clock.clock_minute())
 		_date.text = format_date(clock.day_of_season(), clock.season())
-	var it: Interactable = probe.current() if probe != null else null
-	_prompt.visible = it != null
-	if it != null:
-		_prompt.text = it.prompt(probe.actor())
+	_prompt.text = probe.prompt_text() if probe != null else ""
+	_prompt.visible = _prompt.text != ""
 
 
 func _process(delta: float) -> void:
