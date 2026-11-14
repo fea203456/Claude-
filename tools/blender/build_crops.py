@@ -267,23 +267,29 @@ def build_nightbloom(stage, rng):
         lathe(b, [(0.0, -0.01), (0.03, 0.02), (0.034, 0.06), (0.02, 0.1), (0.0, 0.13)],
               "stem_dark", sides=6, mat=frame(top, math.radians(40), math.radians(-60)))
     elif stage == 3:
-        # чашелистики вниз, два венчика фиолетовых лепестков, бледные тычинки в центре
-        for k in range(5):
-            yaw = k * 2.0 * math.pi / 5.0
-            leaf(b, top, yaw, math.radians(-40), 0.07, 0.03, "stem_dark", droop=0.0, fold=0.2,
-                 sections=((0.5, 1.0),))
-        center = top + UP * 0.02
-        for k in range(6):
-            yaw = k * 2.0 * math.pi / 6.0 + rng.uniform(-0.12, 0.12)
-            leaf(b, center, yaw, math.radians(34), 0.21 * rng.uniform(0.92, 1.05), 0.13,
-                 "bloom_violet", droop=0.32, fold=0.45, sections=((0.35, 1.0), (0.72, 0.8)))
-        for k in range(5):
-            yaw = (k + 0.5) * 2.0 * math.pi / 5.0
-            leaf(b, center + UP * 0.005, yaw, math.radians(62), 0.13, 0.09, "bloom_violet",
-                 droop=0.2, fold=0.5, sections=((0.4, 1.0), (0.75, 0.75)))
-        lathe(b, [(0.018, 0.0), (0.016, 0.04), (0.028, 0.06), (0.0, 0.075)], "silver_ripe",
-              sides=5, mat=frame(center, 0.0, 0.0))
+        bloom(b, rng, top)
     return b.finish()
+
+
+def bloom(b, rng, top):
+    """Раскрытый цветок ночецвета на верхушке стебля top (чашей вверх, ≈ 0.4 м в поперечнике):
+    чашелистики вниз, два венчика фиолетовых лепестков, бледные тычинки в центре."""
+    top = Vector(top)
+    for k in range(5):
+        yaw = k * 2.0 * math.pi / 5.0
+        leaf(b, top, yaw, math.radians(-40), 0.07, 0.03, "stem_dark", droop=0.0, fold=0.2,
+             sections=((0.5, 1.0),))
+    center = top + UP * 0.02
+    for k in range(6):
+        yaw = k * 2.0 * math.pi / 6.0 + rng.uniform(-0.12, 0.12)
+        leaf(b, center, yaw, math.radians(34), 0.21 * rng.uniform(0.92, 1.05), 0.13,
+             "bloom_violet", droop=0.32, fold=0.45, sections=((0.35, 1.0), (0.72, 0.8)))
+    for k in range(5):
+        yaw = (k + 0.5) * 2.0 * math.pi / 5.0
+        leaf(b, center + UP * 0.005, yaw, math.radians(62), 0.13, 0.09, "bloom_violet",
+             droop=0.2, fold=0.5, sections=((0.4, 1.0), (0.75, 0.75)))
+    lathe(b, [(0.018, 0.0), (0.016, 0.04), (0.028, 0.06), (0.0, 0.075)], "silver_ripe",
+          sides=5, mat=frame(center, 0.0, 0.0))
 
 
 BUILDERS = {"silverleaf": build_silverleaf, "boneroot": build_boneroot,
