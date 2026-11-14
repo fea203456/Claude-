@@ -526,13 +526,38 @@ func _plant_watered(flow: GameFlow) -> String:
 	return "" if flow.farm.water(CELL) else "water failed"
 
 
-## Запись клетки CELL в файле сохранения ({} если нет).
-func _saved_plot(save: Dictionary) -> Dictionary:
+## Пустая вскопанная клетка с усталой почвой (плодородие 30): каждая ночь даёт ровно +3,
+## так что вторая ночь видна (36 вместо 33), даже когда у политой клетки рост уже упёрся.
+const TIRED := Vector2i(1, 3)
+const TIRED_FERTILITY := 30.0
+
+
+func _add_tired_cell(flow: GameFlow) -> void:
+	var d := flow.farm.to_save()
+	(d["plots"] as Array).append({"x": TIRED.x, "z": TIRED.y, "fertility": TIRED_FERTILITY,
+			"watered": false, "crop": "", "growth": 0.0})
+	flow.farm.from_save(d)
+
+
+## Ровно одна ночь для усталой клетки: в памяти и в файле сохранения. "" — всё верно.
+func _check_tired_one_night(flow: GameFlow, save: Dictionary) -> String:
+	var want := TIRED_FERTILITY + FarmState.RECOVERY
+	var mem: float = flow.farm.plot(TIRED).get("fertility", -1.0)
+	if mem != want:
+		return "tired cell fertility %s, expected %s (one night)" % [mem, want]
+	var saved := _saved_plot(save, TIRED)
+	if saved.is_empty() or float(saved["fertility"]) != want:
+		return "saved tired cell %s, expected fertility %s" % [saved, want]
+	return ""
+
+
+## Запись клетки cell в файле сохранения ({} если нет).
+func _saved_plot(save: Dictionary, cell := CELL) -> Dictionary:
 	var farm = save.get("farm")
 	if not farm is Dictionary or not farm.get("plots") is Array:
 		return {}
 	for p in farm["plots"]:
-		if p is Dictionary and int(p.get("x", -99)) == CELL.x and int(p.get("z", -99)) == CELL.y:
+		if p is Dictionary and int(p.get("x", -99)) == cell.x and int(p.get("z", -99)) == cell.y:
 			return p
 	return {}
 
@@ -643,14 +668,17 @@ func test_farm_and_inventory_roundtrip_through_flow() -> String:
 	return err
 
 
-## Политая серебрянка: после сна рост ровно 1.0 (одна ночь), и в автосохранении тоже.
+## Политая серебрянка: после сна рост ровно 1.0, усталая клетка +3 (одна ночь),
+## и в автосохранении тоже.
 func test_night_once_on_sleep() -> String:
 	var flow := _flow()
 	var w: Node = await _world(flow)
 	var err := _plant_watered(flow)
+	_add_tired_cell(flow)
 	flow.clock.minutes = 800
 	(_node(w, "Bed") as Bed).sleep_requested.emit()
-	var saved := _saved_plot(_read_save())
+	var save := _read_save()
+	var saved := _saved_plot(save)
 	var plot := flow.farm.plot(CELL)
 	if err != "":
 		pass
@@ -660,6 +688,8 @@ func test_night_once_on_sleep() -> String:
 		err = "plot after sleep %s" % plot
 	elif saved.is_empty() or float(saved["growth"]) != 1.0 or saved["watered"]:
 		err = "saved plot %s" % saved
+	else:
+		err = _check_tired_one_night(flow, save)
 	_free_flow(flow)
 	return err
 
@@ -669,8 +699,10 @@ func test_night_once_on_collapse() -> String:
 	var flow := _flow()
 	await _world(flow)
 	var err := _plant_watered(flow)
+	_add_tired_cell(flow)
 	flow.clock.advance(1200)
-	var saved := _saved_plot(_read_save())
+	var save := _read_save()
+	var saved := _saved_plot(save)
 	var plot := flow.farm.plot(CELL)
 	if err != "":
 		pass
@@ -680,6 +712,8 @@ func test_night_once_on_collapse() -> String:
 		err = "plot after collapse %s" % plot
 	elif saved.is_empty() or float(saved["growth"]) != 1.0 or saved["watered"]:
 		err = "saved plot %s" % saved
+	else:
+		err = _check_tired_one_night(flow, save)
 	_free_flow(flow)
 	return err
 
