@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
 # tools/capture_daynight.sh — съёмка суток на тестовом участке.
 # Выход в docs/previews/:
-#   day_0600.png, day_1200.png, day_1900.png, day_2300.png — 1280×720, часы стоят;
+#   day_0600, day_1200, day_1900, day_2100, day_2300, day_0100 (.png) — 1280×720, часы стоят,
+#     герой у северо-западного угла частокола (ракурс — SHOT_POSE в daynight_capture.gd);
 #   farm_walk.mp4 — 10 с (30 кадр/с, H.264 yuv420p, < 5 МБ): герой идёт от SpawnStart в дом.
-# После кадров tools/check_luminance.py проверяет порядок их яркости (провал — выход 1).
+# После кадров tools/check_luminance.py проверяет порядок их яркости и контраст YHIGH − YLOW
+# утра и полудня не ниже MIN_CONTRAST (провал — выход 1, не удалось измерить — выход 2).
 # Падает, если Godot запустился не на Forward+ (например, откатился на OpenGL).
 # Игровое сохранение user://save/slot_1.json не трогается (см. daynight_capture.gd).
 set -euo pipefail
@@ -16,6 +18,9 @@ LEAD_FRAMES=30      # первые кадры видео выбрасываем:
 WALK_FRAMES=300     # 10 с
 CRF=24
 MAX_BYTES=$((5 * 1024 * 1024))
+# Порог контраста: 1.5 × контраст day_1200 до настройки света (26 в том же ракурсе) ≈ 39.
+MIN_CONTRAST="${MIN_CONTRAST:-39}"
+STILLS=(day_0600 day_1200 day_1900 day_2100 day_2300 day_0100)
 
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
@@ -45,10 +50,10 @@ run_godot() {  # run_godot <log> <godot args…>
 echo "capture_daynight: stills to $OUT"
 run_godot "$TMP/stills.log" --fixed-fps "$FPS" --resolution 1280x720 --script "$SCRIPT" -- "$OUT"
 check_renderer "$TMP/stills.log"
-for n in day_0600 day_1200 day_1900 day_2300; do
+for n in "${STILLS[@]}"; do
   [ -s "$OUT/$n.png" ] || { cat "$TMP/stills.log" >&2; echo "capture_daynight: $n.png missing" >&2; exit 1; }
 done
-python3 "$ROOT/tools/check_luminance.py" "$OUT"
+python3 "$ROOT/tools/check_luminance.py" "$OUT" --min-contrast "$MIN_CONTRAST"
 
 echo "capture_daynight: walk, $((LEAD_FRAMES + WALK_FRAMES)) frames to $TMP/walk.avi"
 run_godot "$TMP/walk.log" --write-movie "$TMP/walk.avi" --fixed-fps "$FPS" --resolution 1280x720 \
@@ -69,4 +74,4 @@ if [ "$size" -ge "$MAX_BYTES" ]; then
   echo "capture_daynight: farm_walk.mp4 is not under 5 MB" >&2
   exit 1
 fi
-echo "capture_daynight: wrote 4 stills and farm_walk.mp4 to $OUT"
+echo "capture_daynight: wrote ${#STILLS[@]} stills and farm_walk.mp4 to $OUT"

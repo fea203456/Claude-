@@ -81,6 +81,7 @@ func test_apply_sets_nodes() -> String:
 	root.add_child(we)
 	root.add_child(sun)
 	root.add_child(l)
+	env = we.environment  # _ready подменил окружение копией
 	l.apply(360.0)
 	var s := curve.sample(360.0)
 	var ok: bool = is_equal_approx(sun.light_energy, float(s["sun_energy"])) \
@@ -109,7 +110,7 @@ func _rig(curve: DayNightCurve) -> Array:
 	root.add_child(we)
 	root.add_child(sun)
 	root.add_child(l)
-	return [l, sun, we, env]
+	return [l, sun, we, we.environment]  # копия, сделанная в _ready
 
 
 func _free_rig(r: Array) -> void:
@@ -151,4 +152,143 @@ func test_process_uses_injected_clock() -> String:
 	var msg := "energy=%s want %s" % [sun.light_energy, s["sun_energy"]]
 	clock.free()
 	_free_rig(r)
+	return "" if ok else msg
+
+
+func test_sun_never_up_at_night() -> String:
+	var curve := load(CURVE_PATH) as DayNightCurve
+	var m := 840
+	while m <= 1200:
+		var s := curve.sample(float(m))
+		if not (float(s["sun_pitch_deg"]) < 0.0):
+			return "sun up at %d: pitch %s" % [m, s["sun_pitch_deg"]]
+		if not is_zero_approx(float(s["sun_energy"])):
+			return "sun energy at %d: %s" % [m, s["sun_energy"]]
+		m += 5
+	# Закат 780…840: кривая опускает солнце за горизонт раньше, чем гасит энергию;
+	# свет на сцене не должен светить из-под горизонта (pitch < 0 ⇒ energy == 0).
+	var r := _rig(curve)
+	var l: DayNightLighting = r[0]
+	var sun: DirectionalLight3D = r[1]
+	var msg := ""
+	m = 780
+	while m <= 840 and msg == "":
+		l.apply(float(m))
+		var pitch := float(curve.sample(float(m))["sun_pitch_deg"])
+		if pitch < 0.0 and not is_zero_approx(sun.light_energy):
+			msg = "sun below horizon at %d (pitch %s) with energy %s" % [m, pitch, sun.light_energy]
+		m += 1
+	_free_rig(r)
+	return msg
+
+
+func test_sun_hidden_when_off() -> String:
+	var curve := load(CURVE_PATH) as DayNightCurve
+	var r := _rig(curve)
+	var l: DayNightLighting = r[0]
+	var sun: DirectionalLight3D = r[1]
+	var msg := ""
+	l.apply(360.0)
+	if not sun.visible:
+		msg = "sun hidden at noon"
+	if msg == "":
+		l.apply(1000.0)
+		if sun.visible:
+			msg = "sun visible at night (energy %s)" % sun.light_energy
+	if msg == "":
+		l.apply(360.0)
+		if not sun.visible:
+			msg = "sun not shown again in the morning"
+	_free_rig(r)
+	return msg
+
+
+func test_moon_only_at_night() -> String:
+	var curve := load(CURVE_PATH) as DayNightCurve
+	var day := float(curve.sample(360.0).get("moon_energy", -1.0))
+	var n1 := float(curve.sample(960.0).get("moon_energy", -1.0))
+	var n2 := float(curve.sample(1200.0).get("moon_energy", -1.0))
+	if not is_zero_approx(day):
+		return "moon at day: %s" % day
+	if not (n1 > 0.0 and n2 > 0.0):
+		return "no moon at night: %s %s" % [n1, n2]
+	return ""
+
+
+func test_ground_fog_night_only() -> String:
+	var curve := load(CURVE_PATH) as DayNightCurve
+	var day := float(curve.sample(360.0).get("ground_fog_density", -1.0))
+	var night := float(curve.sample(1000.0).get("ground_fog_density", -1.0))
+	return "" if day >= 0.0 and night > 4.0 * day else "ground fog day=%s night=%s" % [day, night]
+
+
+func test_apply_sets_moon_and_ground_fog() -> String:
+	var curve := load(CURVE_PATH) as DayNightCurve
+	var r := _rig(curve)
+	var l: DayNightLighting = r[0]
+	var moon := DirectionalLight3D.new()
+	var gf := FogMaterial.new()
+	(Engine.get_main_loop() as SceneTree).root.add_child(moon)
+	l.moon = moon
+	l.ground_fog = gf
+	l.apply(960.0)
+	var s := curve.sample(960.0)
+	var msg := ""
+	if not is_equal_approx(moon.light_energy, float(s["moon_energy"])):
+		msg = "moon energy %s" % moon.light_energy
+	elif not is_equal_approx(moon.rotation_degrees.x, -float(s["moon_pitch_deg"])):
+		msg = "moon pitch %s" % moon.rotation_degrees.x
+	elif not moon.light_color.is_equal_approx(s["moon_color"]):
+		msg = "moon color"
+	elif not is_equal_approx(gf.density, float(s["ground_fog_density"])):
+		msg = "ground fog %s" % gf.density
+	elif not moon.visible:
+		msg = "moon hidden at night"
+	if msg == "":
+		l.apply(360.0)
+		if moon.visible:
+			msg = "moon visible at day"
+	moon.queue_free()
+	_free_rig(r)
+	return msg
+
+
+func test_missing_new_fields_ok() -> String:
+	var curve := DayNightCurve.new()
+	var ks: Array[Dictionary] = [_key(0, 0.0, 0.0, Color(0, 0, 0)), _key(100, 20.0, 2.0, Color(1, 0.5, 0))]
+	curve.keys = ks
+	var r := _rig(curve)
+	var l: DayNightLighting = r[0]
+	var moon := DirectionalLight3D.new()
+	var gf := FogMaterial.new()
+	(Engine.get_main_loop() as SceneTree).root.add_child(moon)
+	l.moon = moon
+	l.ground_fog = gf
+	var d0 := gf.density
+	l.apply(50.0)
+	var ok: bool = not moon.visible and is_equal_approx(gf.density, d0)
+	moon.queue_free()
+	_free_rig(r)
+	return "" if ok else "visible=%s density=%s want %s" % [moon.visible, gf.density, d0]
+
+
+func test_env_not_shared() -> String:
+	var root := (Engine.get_main_loop() as SceneTree).root
+	var res := load("res://scenes/dev/dusk_environment.tres") as Environment
+	var before := res.volumetric_fog_density
+	var we := WorldEnvironment.new()
+	we.environment = res
+	var l := DayNightLighting.new()
+	l.use_global_clock = false
+	l.curve = load(CURVE_PATH) as DayNightCurve
+	l.world_env = we
+	root.add_child(we)
+	root.add_child(l)
+	l.apply(1000.0)
+	var ok: bool = is_equal_approx(res.volumetric_fog_density, before) \
+		and we.environment != res \
+		and not is_equal_approx(we.environment.volumetric_fog_density, before)
+	var msg := "shared=%s copy=%s before=%s" % [res.volumetric_fog_density, we.environment.volumetric_fog_density, before]
+	l.queue_free()
+	we.queue_free()
 	return "" if ok else msg

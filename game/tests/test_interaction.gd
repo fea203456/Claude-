@@ -2,7 +2,8 @@ extends RefCounted
 
 const KEYS := ["PROMPT_SLEEP", "PROMPT_TOO_EARLY", "DATE_FMT", "SEASON_0", "SEASON_1", "SEASON_2",
 	"SEASON_3", "MENU_CONTINUE", "MENU_NEW_GAME", "MENU_QUIT", "MENU_RESUME", "MENU_TO_MAIN",
-	"SAVE_TOO_NEW", "SAVE_CORRUPT", "SAVE_RESTORED_BAK", "SAVE_FAILED"]
+	"SAVE_TOO_NEW", "SAVE_CORRUPT", "SAVE_RESTORED_BAK", "SAVE_FAILED", "PROMPT_FILL_CAN",
+	"PROMPT_CAN_FULL"]
 
 ## Запоминает, кого ему передали в prompt/interact.
 class Recorder extends Interactable:
@@ -15,6 +16,21 @@ class Recorder extends Interactable:
 
 	func interact(by: Node) -> void:
 		interact_by = by
+
+
+## Запасной обработчик зонда (как FarmInteractor): считает вызовы interact.
+class Fallback extends Node:
+	var allowed := true
+	var calls := 0
+
+	func prompt(_by: Node) -> String:
+		return "FALLBACK"
+
+	func can_interact(_by: Node) -> bool:
+		return allowed
+
+	func interact(_by: Node) -> void:
+		calls += 1
 
 
 func _root() -> Node:
@@ -258,4 +274,56 @@ func test_hud_prompt_passes_player() -> String:
 	hud.free()
 	it.free()
 	n[0].free()
+	return err
+
+
+func _press(probe: InteractionProbe) -> void:
+	var ev := InputEventAction.new()
+	ev.action = "interact"
+	ev.pressed = true
+	probe._unhandled_input(ev)
+
+
+func test_probe_fallback_only_without_interactable() -> String:
+	var rig := _rig()
+	var probe: InteractionProbe = rig[1]
+	var fb := Fallback.new()
+	probe.fallback = fb
+	var it := Recorder.new()
+	_root().add_child(it)
+	it.global_position = Vector3(0, 0, 1.0)
+	var err := ""
+	if probe.prompt_text() != "REC":
+		err = "interactable in reach must win the prompt: «%s»" % probe.prompt_text()
+	_press(probe)
+	if err == "" and (it.interact_by == null or fb.calls != 0):
+		err = "interactable in reach must win the press (fallback calls = %d)" % fb.calls
+	it.global_position = Vector3(0, 0, 3.0)
+	if err == "" and probe.prompt_text() != "FALLBACK":
+		err = "fallback prompt not used: «%s»" % probe.prompt_text()
+	_press(probe)
+	if err == "" and fb.calls != 1:
+		err = "fallback interact calls = %d, expected 1" % fb.calls
+	fb.allowed = false
+	_press(probe)
+	if err == "" and fb.calls != 1:
+		err = "fallback interacted although can_interact is false"
+	it.free()
+	fb.free()
+	rig[0].free()
+	return err
+
+
+func test_probe_finds_sibling_farm_interactor() -> String:
+	var hero := Node3D.new()
+	var fi := FarmInteractor.new()
+	fi.name = "FarmInteractor"
+	hero.add_child(fi)
+	var probe := InteractionProbe.new()
+	hero.add_child(probe)
+	_root().add_child(hero)
+	var err := "" if probe.fallback == fi else "probe did not pick the sibling FarmInteractor"
+	if err == "" and probe.prompt_text() != "":
+		err = "farm interactor without state must give an empty prompt"
+	hero.free()
 	return err

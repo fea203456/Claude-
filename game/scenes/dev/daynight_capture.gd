@@ -1,17 +1,21 @@
 extends SceneTree
 ## Съёмщик суток для tools/capture_daynight.sh.
 ##   tools/godot.sh display --script res://scenes/dev/daynight_capture.gd -- <out_dir>
-##     грузит ферму через Game.new_game(), для minutes 0, 360, 780, 1020 ставит время на
-##     замороженных часах, ждёт 30 кадров (туман стабилизируется) и пишет
-##     day_0600.png, day_1200.png, day_1900.png, day_2300.png (1280×720) в out_dir.
+##     грузит ферму через Game.new_game(), ставит героя и камеру в SHOT_POSE, для каждого
+##     minutes из SHOTS ставит время на замороженных часах, ждёт SETTLE_FRAMES кадров
+##     (объёмный туман с временным сглаживанием оседает) и пишет <name>.png (1280×720) в out_dir.
+##   ... -- <out_dir> --pose x,z,yaw_index,distance — другой ракурс (подбор кадра).
 ##   ... -- --walk [minutes]
 ##     для Movie Maker: герой идёт скриптовым маршрутом от SpawnStart в дверь дома и внутрь
 ##     (через PlayerController.step), затем выходит сам. Часы стоят на [minutes] (по умолчанию 120).
 ## Игровое сохранение не трогается: GameFlow получает временный путь, а сам съёмщик
 ## ничего не сохраняет.
 
-const SHOTS := [[0, "day_0600.png"], [360, "day_1200.png"], [780, "day_1900.png"], [1020, "day_2300.png"]]
-const SETTLE_FRAMES := 30
+const SHOTS := [[0, "day_0600"], [360, "day_1200"], [780, "day_1900"], [900, "day_2100"],
+	[1020, "day_2300"], [1140, "day_0100"]]
+const SETTLE_FRAMES := 60
+## Ракурс кадров суток: герой (x, z), CameraRig.yaw_index, CameraRig.distance.
+const SHOT_POSE := [-11.5, -12.5, 1, 9.0]
 const SIZE := Vector2i(1280, 720)
 const TMP_SAVE := "user://capture_tmp/slot_1.json"
 
@@ -58,13 +62,20 @@ func _initialize() -> void:
 
 func _shoot_stills(args: PackedStringArray) -> void:
 	var out_dir := ""
-	for a in args:
-		if not a.begins_with("--"):
-			out_dir = a
+	for i in args.size():
+		if not args[i].begins_with("--") and (i == 0 or args[i - 1] != "--pose"):
+			out_dir = args[i]
 	if out_dir == "":
 		_fail("usage: -- <out_dir>")
 		return
 	DirAccess.make_dir_recursive_absolute(out_dir)
+	var pose: Array = SHOT_POSE.duplicate()
+	var i_pose := args.find("--pose")
+	if i_pose >= 0 and i_pose + 1 < args.size():
+		var parts := args[i_pose + 1].split(",")
+		for k in mini(parts.size(), 4):
+			pose[k] = float(parts[k])
+	_place(pose)
 	for shot in SHOTS:
 		_game.clock.minutes = shot[0]
 		for i in SETTLE_FRAMES:
@@ -74,13 +85,23 @@ func _shoot_stills(args: PackedStringArray) -> void:
 		if img.get_size() != SIZE:
 			push_warning("capture: viewport %s, resizing to %s" % [img.get_size(), SIZE])
 			img.resize(SIZE.x, SIZE.y, Image.INTERPOLATE_LANCZOS)
-		var path: String = out_dir.path_join(shot[1])
+		var path: String = out_dir.path_join(shot[1] + ".png")
 		var err := img.save_png(path)
 		if err != OK:
 			_fail("save %s: %s" % [path, error_string(err)])
 			return
 		print("capture: %s minutes=%d" % [path, shot[0]])
 	quit(0)
+
+
+## Ставит героя в (x, z) лицом к камере, камеру — на yaw_index и distance.
+func _place(pose: Array) -> void:
+	var y := _player.global_position.y
+	_player.velocity = Vector3.ZERO
+	_player.from_save({"pos": [pose[0], y, pose[1]], "yaw": int(pose[2]) * PI / 4.0})
+	var rig := _game.world.find_child("CameraRig", true, false) as CameraRig
+	if rig != null:
+		rig.from_save({"yaw_index": int(pose[2]), "distance": pose[3]})
 
 
 func _start_walk(args: PackedStringArray) -> void:

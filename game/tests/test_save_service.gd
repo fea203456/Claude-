@@ -71,7 +71,7 @@ func test_roundtrip() -> String:
 		return "load result %d" % r
 	if int(a.data.get("x", -1)) != 5 or a.data.get("name") != "farm":
 		return "data mismatch %s" % str(a.data)
-	if int(parsed["save_version"]) != 1 or not parsed.has("game_version"):
+	if int(parsed["save_version"]) != SaveService.SAVE_VERSION or not parsed.has("game_version"):
 		return "header wrong %s" % str(parsed)
 	return ""
 
@@ -343,3 +343,56 @@ func test_unregister_removes_provider() -> String:
 	if e != OK or not cur is Dictionary:
 		return "save returned %d" % e
 	return "" if not cur.has("node") else "unregistered provider written"
+
+
+## Этап 2 — версия 2: поле и инвентарь.
+func test_current_version_is_2() -> String:
+	if SaveService.SAVE_VERSION != 2:
+		return "SAVE_VERSION = %d" % SaveService.SAVE_VERSION
+	return "" if SaveMigrations.STEPS.has(1) else "no step 1 -> 2"
+
+
+## v1 → v2 добавляет пустое поле и стартовый инвентарь, остальные разделы не трогает.
+func test_v1_to_v2_keeps_unknown_sections() -> String:
+	var v1 := {
+		"save_version": 1, "game_version": "0.1.0",
+		"time": {"day": 4, "minutes": 300, "collapsed_last_night": false},
+		"player": {"pos": [3.0, 0.0, 5.0], "yaw": 0.5},
+		"camera": {"yaw_index": 1, "distance": 9.0},
+		"future": {"k": [1, 2]},
+	}
+	var keep := v1.duplicate(true)
+	var out := SaveMigrations.v1_to_v2(v1.duplicate(true))
+	for key in keep:
+		if out.get(key) != keep[key]:
+			return "section '%s' changed: %s" % [key, str(out.get(key))]
+	if out.get("farm") != {"plots": []}:
+		return "farm = %s" % str(out.get("farm"))
+	if out.get("inventory") != Inventory.starter_save():
+		return "inventory = %s" % str(out.get("inventory"))
+	var migrated := SaveMigrations.migrate(v1.duplicate(true), 2)
+	if int(migrated.get("save_version", 0)) != 2 or not migrated.has("farm") or not migrated.has("inventory"):
+		return "default steps did not migrate: %s" % str(migrated)
+	return ""
+
+
+## Файл v1 загружается сервисом с шагами по умолчанию и пишется обратно как v2.
+func test_v1_file_loads_and_saves_as_v2() -> String:
+	var p := DIR + "v1.json"
+	var inv := Stub.new()
+	var s := _svc(Stub.new())
+	s.register("inventory", inv)
+	_write(p, '{"save_version": 1, "game_version": "0.1.0", "time": {"day": 4, "minutes": 300}}')
+	var r := s.load_game(p)
+	var e := s.save_game(p)
+	s.free()
+	if r != SaveService.LoadResult.OK or e != OK:
+		return "load %d save %d" % [r, e]
+	if inv.data.get("slots") != Inventory.starter_save()["slots"]:
+		return "inventory provider got %s" % str(inv.data)
+	var cur = JSON.parse_string(_read(p))
+	if not cur is Dictionary or int(cur["save_version"]) != 2:
+		return "written: %s" % _read(p)
+	if cur.get("farm") != {"plots": []} or int(cur["time"]["day"]) != 4:
+		return "sections after migration: %s" % _read(p)
+	return ""

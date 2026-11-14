@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="ItemDef" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/item_def.gd" id="1"]
+[ext_resource type="Texture2D" path="res://assets/items/seed_silverleaf.png" id="2"]
+
+[resource]
+script = ExtResource("1")
+id = "seed_silverleaf"
+name_key = "ITEM_SEED_SILVERLEAF"
+kind = &"seed"
+icon = ExtResource("2")
+tool = &""
+crop_id = "silverleaf"

@@ -15,3 +15,29 @@ SAVE_TOO_NEW,Сохранение от более новой версии игр
 SAVE_CORRUPT,Сохранение повреждено — начата новая игра,Save is corrupted — started a new game
 SAVE_RESTORED_BAK,Сохранение было повреждено — загружена предыдущая копия,Save was corrupted — the previous copy was loaded
 SAVE_FAILED,Не удалось сохранить игру,Could not save the game
+ITEM_HOE,Мотыга,Hoe
+ITEM_WATERING_CAN,Лейка,Watering can
+ITEM_SEED_SILVERLEAF,Семена серебрянки,Silverleaf seeds
+ITEM_SEED_BONEROOT,Семена костяного корня,Boneroot seeds
+ITEM_SEED_NIGHTBLOOM,Семена ночецвета,Nightbloom seeds
+ITEM_SILVERLEAF,Серебрянка,Silverleaf
+ITEM_BONEROOT,Костяной корень,Boneroot
+ITEM_NIGHTBLOOM,Ночецвет,Nightbloom
+STAGE_0,росток,sprout
+STAGE_1,побег,shoot
+STAGE_2,взрослое,grown
+STAGE_3,спелое,ripe
+PROMPT_TILL,E — вскопать,E — till
+PROMPT_PLANT_FMT,E — посадить: {crop},E — plant: {crop}
+PROMPT_WATER,E — полить,E — water
+PROMPT_HARVEST,E — собрать,E — harvest
+PROMPT_CAN_EMPTY,Лейка пуста,The can is empty
+PROMPT_ALREADY_WATERED,Уже полито,Already watered
+PROMPT_CANT_TILL,Здесь нельзя копать,Can't dig here
+PROMPT_NO_ROOM,Нет места,No room
+HINT_DISCARD,X — выбросить 1 шт. выбранного урожая,X — discard 1 of the selected produce
+PROMPT_GROWING_FMT,{crop} — {stage},{crop} — {stage}
+PROMPT_UNKNOWN_PLANT,Неизвестное растение,Unknown plant
+SOIL_FMT,Земля: {pct}%,Soil: {pct}%
+PROMPT_FILL_CAN,E — набрать воды,E — draw water
+PROMPT_CAN_FULL,Лейка полна,The can is full

@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="ItemDef" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/content/item_def.gd" id="1"]
+[ext_resource type="Texture2D" path="res://assets/items/watering_can.png" id="2"]
+
+[resource]
+script = ExtResource("1")
+id = "watering_can"
+name_key = "ITEM_WATERING_CAN"
+kind = &"tool"
+icon = ExtResource("2")
+tool = &"can"
+crop_id = ""

@@ -501,3 +501,307 @@ func test_autoload_game_is_idle() -> String:
 	if not game is GameFlow:
 		return "/root/Game is not a GameFlow"
 	return "" if (game as GameFlow).world == null else "autoload Game loaded a world on its own"
+
+
+# --- Этап 2: поле и инвентарь в игровом цикле ---
+
+## Клетка поля для тестов и её культура.
+const CELL := Vector2i(0, 3)
+const CROP := "silverleaf"
+
+
+## Временная замена узлов поля/колодца/хотбара (их сцены появятся позже).
+class Receiver extends Node:
+	var state: FarmState
+	var inventory: Inventory
+	var db: ContentDB
+
+
+## Вскопать, посадить серебрянку (семя из ячейки 2), полить из лейки.
+func _plant_watered(flow: GameFlow) -> String:
+	if not flow.farm.till(CELL) or not flow.farm.plant(CELL, CROP):
+		return "till/plant failed"
+	if not flow.inventory.remove_from_slot(2, 1) or not flow.inventory.use_water():
+		return "inventory spend failed"
+	return "" if flow.farm.water(CELL) else "water failed"
+
+
+## Пустая вскопанная клетка с усталой почвой (плодородие 30): каждая ночь даёт ровно +3,
+## так что вторая ночь видна (36 вместо 33), даже когда у политой клетки рост уже упёрся.
+const TIRED := Vector2i(1, 3)
+const TIRED_FERTILITY := 30.0
+
+
+func _add_tired_cell(flow: GameFlow) -> void:
+	var d := flow.farm.to_save()
+	(d["plots"] as Array).append({"x": TIRED.x, "z": TIRED.y, "fertility": TIRED_FERTILITY,
+			"watered": false, "crop": "", "growth": 0.0})
+	flow.farm.from_save(d)
+
+
+## Ровно одна ночь для усталой клетки: в памяти и в файле сохранения. "" — всё верно.
+func _check_tired_one_night(flow: GameFlow, save: Dictionary) -> String:
+	var want := TIRED_FERTILITY + FarmState.RECOVERY
+	var mem: float = flow.farm.plot(TIRED).get("fertility", -1.0)
+	if mem != want:
+		return "tired cell fertility %s, expected %s (one night)" % [mem, want]
+	var saved := _saved_plot(save, TIRED)
+	if saved.is_empty() or float(saved["fertility"]) != want:
+		return "saved tired cell %s, expected fertility %s" % [saved, want]
+	return ""
+
+
+## Запись клетки cell в файле сохранения ({} если нет).
+func _saved_plot(save: Dictionary, cell := CELL) -> Dictionary:
+	var farm = save.get("farm")
+	if not farm is Dictionary or not farm.get("plots") is Array:
+		return {}
+	for p in farm["plots"]:
+		if p is Dictionary and int(p.get("x", -99)) == cell.x and int(p.get("z", -99)) == cell.y:
+			return p
+	return {}
+
+
+func test_attach_hands_out_farm_and_inventory() -> String:
+	var flow := _flow()
+	var w := (load(FARM) as PackedScene).instantiate()
+	var names := ["FarmField", "FarmInteractor", "Well", "Hotbar"]
+	for n in names:
+		# Настоящие узлы фермы заменяются приёмниками, записывающими всё, что им раздали.
+		var real := w.find_child(n, true, false)
+		if real != null:
+			real.get_parent().remove_child(real)
+			real.free()
+		var r := Receiver.new()
+		r.name = n
+		w.add_child(r)
+	_root().add_child(w)
+	flow.attach_world(w)
+	var err := ""
+	var r: Dictionary = {}
+	for n in names:
+		r[n] = _node(w, n)
+	if flow.db == null or flow.inventory == null or flow.farm == null:
+		err = "db/inventory/farm not created"
+	elif flow.inventory.db != flow.db or flow.farm.db != flow.db:
+		err = "inventory/farm do not share flow.db"
+	elif not flow.saves.is_registered("inventory") or not flow.saves.is_registered("farm"):
+		err = "inventory/farm not registered"
+	elif r["FarmField"].state != flow.farm or r["FarmInteractor"].state != flow.farm:
+		err = "state not handed to FarmField/FarmInteractor"
+	elif r["Well"].state != null or r["Hotbar"].state != null:
+		err = "state handed to Well/Hotbar"
+	elif r["FarmField"].inventory != null:
+		err = "inventory handed to FarmField"
+	elif r["FarmInteractor"].inventory != flow.inventory or r["Well"].inventory != flow.inventory \
+			or r["Hotbar"].inventory != flow.inventory:
+		err = "inventory not handed to FarmInteractor/Well/Hotbar"
+	else:
+		for n in names:
+			if r[n].db != flow.db:
+				err = "db not handed to %s" % n
+	var db := flow.db
+	var old_farm := flow.farm
+	if err == "":
+		flow.detach_world()
+		if flow.inventory != null or flow.farm != null:
+			err = "detach_world left inventory/farm"
+		elif flow.saves.is_registered("inventory") or flow.saves.is_registered("farm"):
+			err = "detach_world left inventory/farm registered"
+	if err == "":
+		flow.attach_world(w)
+		if flow.db != db:
+			err = "ContentDB loaded again on re-attach"
+		elif flow.farm == old_farm or flow.farm == null:
+			err = "farm not created anew on attach"
+	_free_flow(flow)
+	return err
+
+
+## Файл этапа 1 (v1: time / player / camera) → стартовый набор, пустое поле,
+## время и позиция героя из файла.
+func test_v1_save_migrates_to_starter_farm() -> String:
+	var flow := _flow()
+	_write(PATH, JSON.stringify({
+		"save_version": 1, "game_version": "0.1.0",
+		"time": {"day": 4, "minutes": 300, "collapsed_last_night": false},
+		"player": {"pos": [3.0, 0.0, 5.0], "yaw": 0.5},
+		"camera": {"yaw_index": 1, "distance": 9.0},
+	}, "\t"))
+	flow.continue_game()
+	var w := flow.world
+	var err := ""
+	if w == null:
+		err = "farm not loaded: %s" % flow.last_message
+	elif flow.inventory == null or flow.farm == null:
+		err = "no inventory/farm"
+	elif flow.inventory.to_save() != Inventory.starter_save():
+		err = "inventory %s" % str(flow.inventory.to_save())
+	elif not flow.farm.cells().is_empty():
+		err = "field not empty: %s" % [flow.farm.cells()]
+	elif flow.clock.day != 4 or flow.clock.minutes != 300:
+		err = "time day=%d minutes=%d" % [flow.clock.day, flow.clock.minutes]
+	elif not _near(_player(w).global_position, Vector3(3, 0, 5)):
+		err = "player at %s" % _player(w).global_position
+	_free_flow(flow)
+	return err
+
+
+func test_farm_and_inventory_roundtrip_through_flow() -> String:
+	var flow := _flow()
+	flow.new_game()
+	var err := _plant_watered(flow)
+	flow.inventory.select(4)
+	var inv := flow.inventory.to_save()
+	var plot := flow.farm.plot(CELL)
+	await _tree().physics_frame
+	flow.quit_to_menu()
+	await _tree().process_frame
+	await _tree().process_frame
+	flow.continue_game()
+	if err != "":
+		pass
+	elif flow.world == null or flow.farm == null:
+		err = "continue_game did not load the farm: %s" % flow.last_message
+	elif flow.inventory.to_save() != inv:
+		err = "inventory %s, expected %s" % [flow.inventory.to_save(), inv]
+	elif flow.farm.plot(CELL) != plot or flow.farm.cells() != [CELL]:
+		err = "plot %s, expected %s" % [flow.farm.plot(CELL), plot]
+	elif flow.inventory.count_of("seed_silverleaf") != 5 or flow.inventory.can_water != 9:
+		err = "seeds %d, water %d" % [flow.inventory.count_of("seed_silverleaf"), flow.inventory.can_water]
+	_free_flow(flow)
+	return err
+
+
+## Политая серебрянка: после сна рост ровно 1.0, усталая клетка +3 (одна ночь),
+## и в автосохранении тоже.
+func test_night_once_on_sleep() -> String:
+	var flow := _flow()
+	var w: Node = await _world(flow)
+	var err := _plant_watered(flow)
+	_add_tired_cell(flow)
+	flow.clock.minutes = 800
+	(_node(w, "Bed") as Bed).sleep_requested.emit()
+	var save := _read_save()
+	var saved := _saved_plot(save)
+	var plot := flow.farm.plot(CELL)
+	if err != "":
+		pass
+	elif flow.clock.day != 2:
+		err = "did not sleep: day %d" % flow.clock.day
+	elif plot["growth"] != 1.0 or plot["watered"]:
+		err = "plot after sleep %s" % plot
+	elif saved.is_empty() or float(saved["growth"]) != 1.0 or saved["watered"]:
+		err = "saved plot %s" % saved
+	else:
+		err = _check_tired_one_night(flow, save)
+	_free_flow(flow)
+	return err
+
+
+## То же через обморок в 02:00.
+func test_night_once_on_collapse() -> String:
+	var flow := _flow()
+	await _world(flow)
+	var err := _plant_watered(flow)
+	_add_tired_cell(flow)
+	flow.clock.advance(1200)
+	var save := _read_save()
+	var saved := _saved_plot(save)
+	var plot := flow.farm.plot(CELL)
+	if err != "":
+		pass
+	elif flow.clock.day != 2 or not flow.clock.collapsed_last_night:
+		err = "did not collapse: day %d" % flow.clock.day
+	elif plot["growth"] != 1.0 or plot["watered"]:
+		err = "plot after collapse %s" % plot
+	elif saved.is_empty() or float(saved["growth"]) != 1.0 or saved["watered"]:
+		err = "saved plot %s" % saved
+	else:
+		err = _check_tired_one_night(flow, save)
+	_free_flow(flow)
+	return err
+
+
+## Загрузка не считает ночь: рост как в файле, клетка всё ещё полита.
+func test_load_does_not_grow() -> String:
+	var flow := _flow()
+	_write(PATH, JSON.stringify({
+		"save_version": SaveService.SAVE_VERSION,
+		"time": {"day": 3, "minutes": 100, "collapsed_last_night": false},
+		"farm": {"plots": [{"x": CELL.x, "z": CELL.y, "fertility": 100.0, "watered": true,
+				"crop": CROP, "growth": 1.0}]},
+		"inventory": Inventory.starter_save(),
+	}))
+	flow.continue_game()
+	var err := ""
+	if flow.world == null or flow.farm == null:
+		err = "farm not loaded: %s" % flow.last_message
+	else:
+		var plot := flow.farm.plot(CELL)
+		if plot.is_empty() or plot["growth"] != 1.0 or not plot["watered"]:
+			err = "plot after load %s" % plot
+		elif flow.clock.day != 3:
+			err = "day %d" % flow.clock.day
+	_free_flow(flow)
+	return err
+
+
+## Поиграть → выйти в меню → новая игра: пустое поле, стартовый набор, лейка 10.
+func test_new_game_resets_farm() -> String:
+	var flow := _flow()
+	flow.new_game()
+	var err := _plant_watered(flow)
+	flow.inventory.add("silverleaf", 7)
+	await _tree().physics_frame
+	flow.quit_to_menu()
+	await _tree().process_frame
+	await _tree().process_frame
+	flow.new_game()
+	var e := flow.save_now()
+	var save := _read_save()
+	if err != "":
+		pass
+	elif not flow.farm.cells().is_empty():
+		err = "field kept: %s" % [flow.farm.cells()]
+	elif flow.inventory.to_save() != Inventory.starter_save():
+		err = "inventory %s" % str(flow.inventory.to_save())
+	elif flow.inventory.can_water != 10:
+		err = "can %d" % flow.inventory.can_water
+	elif e != OK or save.get("farm") != {"plots": []}:
+		err = "saved farm %s" % str(save.get("farm"))
+	_free_flow(flow)
+	return err
+
+
+## Новая игра не запускает ночь: day_started не приходит, политая потом клетка не растёт
+## и остаётся политой (а поле из старого сохранения не подхватывается).
+func test_new_game_does_not_grow_on_start() -> String:
+	var flow := _flow()
+	_write(PATH, JSON.stringify({
+		"save_version": SaveService.SAVE_VERSION,
+		"time": {"day": 5, "minutes": 100},
+		"farm": {"plots": [{"x": CELL.x, "z": CELL.y, "fertility": 100.0, "watered": true,
+				"crop": CROP, "growth": 1.0}]},
+	}))
+	var days := [0]
+	flow.clock.day_started.connect(func(_d: int) -> void: days[0] += 1)
+	flow.new_game()
+	var err := ""
+	if days[0] != 0:
+		err = "new_game emitted day_started %d times" % days[0]
+	elif not flow.farm.cells().is_empty():
+		err = "field from the old save: %s" % [flow.farm.cells()]
+	else:
+		err = _plant_watered(flow)
+	if err == "":
+		await _tree().physics_frame
+		flow.save_now()
+		var saved := _saved_plot(_read_save())
+		var plot := flow.farm.plot(CELL)
+		if plot["growth"] != 0.0 or not plot["watered"]:
+			err = "plot %s" % plot
+		elif saved.is_empty() or float(saved["growth"]) != 0.0 or not saved["watered"]:
+			err = "saved plot %s" % saved
+	_free_flow(flow)
+	return err

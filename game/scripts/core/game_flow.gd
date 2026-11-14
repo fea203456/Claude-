@@ -13,6 +13,11 @@ var save_path := SaveService.SLOT_PATH
 var last_message: String = ""
 ## Подключённый мир (ферма) или null, пока мы в меню.
 var world: Node
+## База контента: грузится один раз на GameFlow (при первом attach_world).
+var db: ContentDB
+## Инвентарь и поле подключённого мира: создаются заново в attach_world, null в меню.
+var inventory: Inventory
+var farm: FarmState
 
 var _hud: Hud
 var _player: PlayerController
@@ -79,8 +84,8 @@ func continue_game() -> void:
 	_make_current(w)
 
 
-## Находит в мире узлы по именам, раздаёт им часы/зонд/камеру, регистрирует сохраняемых
-## и подписывается на сон и обморок. Сцену не меняет.
+## Находит в мире узлы по именам, раздаёт им часы/зонд/камеру/поле/инвентарь, регистрирует
+## сохраняемых и подписывается на сон и обморок. Сцену не меняет.
 func attach_world(w: Node) -> void:
 	_resolve()
 	detach_world()
@@ -102,7 +107,10 @@ func attach_world(w: Node) -> void:
 	var pause_menu := w.find_child("PauseMenu", true, false) as PauseMenu
 	if pause_menu != null:
 		pause_menu.flow = self
+	_attach_farm(w)
 	saves.register("time", clock)
+	saves.register("inventory", inventory)
+	saves.register("farm", farm)
 	if _player != null:
 		saves.register("player", _player)
 	if _camera != null:
@@ -111,6 +119,30 @@ func attach_world(w: Node) -> void:
 		_bed.sleep_requested.connect(_on_sleep_requested)
 	clock.collapsed.connect(_on_collapsed)
 	clock.day_started.connect(_on_day_started)
+
+
+## Свежие инвентарь (стартовый набор — на случай сохранения без этого раздела) и поле
+## и раздача их узлам по именам; отсутствующих узлов пока нет — пропускаются.
+func _attach_farm(w: Node) -> void:
+	if db == null:
+		db = ContentDB.load_default()
+	inventory = Inventory.new()
+	inventory.db = db
+	inventory.reset_to_starter()
+	farm = FarmState.new()
+	farm.db = db
+	for n in ["FarmField", "FarmInteractor", "Well", "Hotbar"]:
+		var node := w.find_child(n, true, false)
+		if node != null:
+			node.set("db", db)
+	for n in ["FarmField", "FarmInteractor"]:
+		var node := w.find_child(n, true, false)
+		if node != null:
+			node.set("state", farm)
+	for n in ["FarmInteractor", "Well", "Hotbar"]:
+		var node := w.find_child(n, true, false)
+		if node != null:
+			node.set("inventory", inventory)
 
 
 func detach_world() -> void:
@@ -125,7 +157,11 @@ func detach_world() -> void:
 	if saves != null:
 		saves.unregister("player")
 		saves.unregister("camera")
+		saves.unregister("inventory")
+		saves.unregister("farm")
 	world = null
+	inventory = null
+	farm = null
 	_hud = null
 	_player = null
 	_camera = null
@@ -205,6 +241,8 @@ func _reset_world_to_new_game() -> void:
 		_player.from_save({"pos": [p.x, p.y, p.z], "yaw": _spawn_start.global_rotation.y})
 	if _camera != null:
 		_camera.from_save({})
+	inventory.reset_to_starter()
+	farm.clear()
 
 
 func _move_to_bed() -> void:
@@ -226,7 +264,11 @@ func _on_collapsed() -> void:
 	_collapse_pending = true
 
 
+## Ночь на поле считается здесь и только здесь — ровно раз за day_started, до автосохранения
+## (и после сна, и после обморока). Загрузка и новая игра day_started не шлют.
 func _on_day_started(_day: int) -> void:
+	if farm != null:
+		farm.advance_night()
 	if not _collapse_pending:
 		return
 	_collapse_pending = false
