@@ -49,7 +49,10 @@ static func _rule(state: FarmState, inv: Inventory, cell: Vector2i) -> Dictionar
 		var crop := state.db.crop(state.plot(cell)["crop"])
 		var n := FarmState.yield_for(crop.yield_count, state.plot(cell)["fertility"])
 		if not inv.can_add_all([[crop.produce_item, n], [crop.seed_item, crop.seed_count]]):
-			return _result(&"none", &"no_room", "PROMPT_NO_ROOM")
+			# отказ подсказывает выход: выбросить лишний урожай
+			var r := _result(&"none", &"no_room", "PROMPT_NO_ROOM")
+			r["text"] += "\n" + TranslationServer.translate("HINT_DISCARD")
+			return r
 		return _result(&"harvest", &"", "PROMPT_HARVEST")
 	# 2. посадка
 	if tilled and not state.has_plant(cell) and def != null and def.kind == &"seed" \

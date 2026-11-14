@@ -1,8 +1,9 @@
 class_name Hotbar
 extends Control
 ## Панель инвентаря: 8 ячеек с иконкой и подписью, подсветка выбранной, выбор клавишами 1–8
-## и D-pad влево/вправо. Инвентарь и базу раздаёт GameFlow после _ready, поэтому всё
-## обновляется из сеттеров; без инвентаря панель пустая и ничего не делает.
+## и D-pad влево/вправо, выбрасывание одной штуки выбранного урожая (discard_item: X / West).
+## Инвентарь и базу раздаёт GameFlow после _ready, поэтому всё обновляется из сеттеров;
+## без инвентаря панель пустая и ничего не делает.
 
 const SLOT_SIZE := 56.0
 const ICON_SIZE := 48.0
@@ -114,6 +115,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		inventory.select_prev()
 	elif event.is_action_pressed(&"hotbar_next"):
 		inventory.select_next()
+	elif event.is_action_pressed(&"discard_item"):
+		inventory.discard_selected_one()
 	else:
 		for i in Inventory.SLOTS:
 			if event.is_action_pressed(StringName("hotbar_%d" % (i + 1))):

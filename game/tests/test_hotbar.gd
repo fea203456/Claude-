@@ -1,5 +1,6 @@
 extends RefCounted
-## Панель инвентаря: иконки, подписи, подсветка, ввод hotbar_*, пауза, раскладка в HUD.
+## Панель инвентаря: иконки, подписи, подсветка, ввод hotbar_* и discard_item, пауза,
+## раскладка в HUD.
 
 const HOTBAR := "res://scenes/ui/hotbar.tscn"
 const HUD := "res://scenes/ui/hud.tscn"
@@ -69,6 +70,40 @@ func test_input_map_has_hotbar_actions() -> String:
 		if not ok:
 			return "%s lost its d-pad button" % pair[0]
 	return ""
+
+
+func test_input_map_has_discard_action() -> String:
+	if not InputMap.has_action("discard_item"):
+		return "action missing: discard_item"
+	var key := false
+	var pad := false
+	for e in InputMap.action_get_events("discard_item"):
+		if e is InputEventKey and (e as InputEventKey).physical_keycode == KEY_X:
+			key = true
+		if e is InputEventJoypadButton and (e as InputEventJoypadButton).button_index == JOY_BUTTON_X:
+			pad = true
+	if not key:
+		return "discard_item: no physical key X"
+	return "" if pad else "discard_item: no joypad button West (X)"
+
+
+## discard_item выбрасывает одну штуку выбранного урожая; у инструмента — ничего.
+func test_discard_action_drops_one_produce() -> String:
+	var inv := _inv()
+	inv.add("boneroot", 4)
+	var bar := _bar(inv)
+	inv.select(5)
+	bar._unhandled_input(_action("discard_item"))
+	var a: int = inv.slot(5).get("count", 0)
+	var t := bar.slot_text(5)
+	inv.select(0)
+	var before := inv.to_save()
+	bar._unhandled_input(_action("discard_item"))
+	var after := inv.to_save()
+	bar.free()
+	if a != 3 or t != "3":
+		return "produce after discard: count %s, text '%s', expected 3" % [a, t]
+	return "" if after == before else "discard_item changed a tool slot"
 
 
 func test_shows_starter_kit() -> String:
@@ -186,9 +221,35 @@ func test_pause_blocks_hotbar_and_actions() -> String:
 			if (n as Node).can_process():
 				err = "%s processes while paused" % (n as Node).name
 		_tree().paused = false
+	# Выбрасывание — настоящим событием в корневой вьюпорт: на паузе не действует, без паузы
+	# действует (проверка, что событие вообще доходит до панели).
+	if err == "":
+		var bar := nodes[0] as Hotbar
+		var inv := _inv()
+		inv.add("silverleaf", 5)
+		inv.select(5)
+		bar.db = _content()
+		bar.inventory = inv
+		_tree().paused = true
+		_push(_action("discard_item"))
+		_tree().paused = false
+		if inv.slot(5).get("count") != 5:
+			err = "discard_item worked while paused: %s" % inv.slot(5)
+		else:
+			_push(_action("discard_item"))
+			if inv.slot(5).get("count") != 4:
+				err = "discard_item did not reach the hotbar unpaused: %s" % inv.slot(5)
 	_tree().paused = false
 	w.free()
 	return err
+
+
+## Событие нажатия и отпускания в корневой вьюпорт, как от игрока.
+func _push(ev: InputEventAction) -> void:
+	_tree().root.push_input(ev)
+	var up := ev.duplicate() as InputEventAction
+	up.pressed = false
+	_tree().root.push_input(up)
 
 
 func test_hud_scene_has_hotbar_and_prompt_not_overlapping() -> String:

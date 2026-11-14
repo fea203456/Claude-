@@ -35,6 +35,7 @@ PROMPT_CAN_EMPTY,Лейка пуста,The can is empty
 PROMPT_ALREADY_WATERED,Уже полито,Already watered
 PROMPT_CANT_TILL,Здесь нельзя копать,Can't dig here
 PROMPT_NO_ROOM,Нет места,No room
+HINT_DISCARD,X — выбросить 1 шт. выбранного урожая,X — discard 1 of the selected produce
 PROMPT_GROWING_FMT,{crop} — {stage},{crop} — {stage}
 PROMPT_UNKNOWN_PLANT,Неизвестное растение,Unknown plant
 SOIL_FMT,Земля: {pct}%,Soil: {pct}%

@@ -223,3 +223,156 @@ func test_loop_survives_unwatered_day() -> String:
 			err = _check_harvested(flow, "after harvest")
 		_free_flow(flow)
 		return err)
+
+
+# --- Полный инвентарь: выбросить урожай и собрать ---
+
+## Текст отказа «нет места» у клетки с плодородием 100 % (ru).
+const NO_ROOM_TEXT := "Нет места\nX — выбросить 1 шт. выбранного урожая\nЗемля: 100%"
+
+
+## Все 8 ячеек заняты, урожай серебрянки — полная стопка 99, спелая серебрянка перед героем:
+## «Нет места» и E ничего не делает. Выбрать урожай (hotbar_3), дважды discard_item (97),
+## E — собрано: урожай 99, семян +2, клетка пустая и вскопанная.
+func test_full_inventory_unlocks_by_discard() -> String:
+	return await _ru(func():
+		var flow := _flow()
+		flow.new_game()
+		var err := ""
+		if flow.world == null:
+			err = "new_game did not load the farm"
+		else:
+			await _tree().physics_frame
+			err = _full_inventory_case(flow)
+		_free_flow(flow)
+		return err)
+
+
+func _full_inventory_case(flow: GameFlow) -> String:
+	var inv := flow.inventory
+	inv.from_save({"slots": [{"id": "hoe", "count": 1}, {"id": "watering_can", "count": 1},
+			{"id": "silverleaf", "count": 99}, {"id": "seed_silverleaf", "count": 3},
+			{"id": "seed_boneroot", "count": 6}, {"id": "seed_nightbloom", "count": 6},
+			{"id": "boneroot", "count": 1}, {"id": "nightbloom", "count": 1}],
+			"can_water": 10, "selected": 0})
+	flow.farm.from_save({"plots": [{"x": CELL.x, "z": CELL.y, "fertility": 100.0,
+			"watered": false, "crop": "silverleaf", "growth": 3.0}]})
+	var err := _stand_at_cell(flow)
+	if err != "":
+		return err
+	if not flow.farm.is_ripe(CELL):
+		return "setup: silverleaf is not ripe"
+	if _hud_prompt(flow) != NO_ROOM_TEXT:
+		return "no-room prompt «%s»" % _hud_prompt(flow)
+	var inv_before := inv.to_save()
+	var farm_before := flow.farm.to_save()
+	_press("interact")
+	if inv.to_save() != inv_before or flow.farm.to_save() != farm_before:
+		return "E with no room changed something: %s" % [inv.to_save()]
+	_press("hotbar_3")
+	if inv.selected_id() != "silverleaf":
+		return "hotbar_3 selected %s" % inv.selected_id()
+	_press("discard_item")
+	_press("discard_item")
+	if inv.slot(2).get("count") != 97:
+		return "after two discards: %s" % inv.slot(2)
+	if not _hud_prompt(flow).begins_with("E — собрать"):
+		return "prompt after discarding «%s»" % _hud_prompt(flow)
+	_press("interact")
+	var plot := flow.farm.plot(CELL)
+	if inv.count_of("silverleaf") != 99 or inv.count_of("seed_silverleaf") != 5:
+		return "after harvest: silverleaf %d, seeds %d" % [inv.count_of("silverleaf"),
+				inv.count_of("seed_silverleaf")]
+	if plot.is_empty() or plot["crop"] != "" or not flow.farm.is_tilled(CELL):
+		return "after harvest: plot %s, expected empty tilled" % [plot]
+	return ""
+
+
+# --- Неизвестные id: файл → игра → файл ---
+
+## Соседняя известная культура: растёт ровно на одну стадию за ночь.
+const KNOWN := Vector2i(1, 3)
+const UNKNOWN_PLOT := {"x": CELL.x, "z": CELL.y, "fertility": 70.0, "watered": false,
+		"crop": "frostroot", "growth": 2.0, "frost": {"depth": 3, "tags": ["a", "b"]}}
+const UNKNOWN_SLOT := {"id": "golden_sickle", "count": 1, "dur": 7, "runes": ["x"]}
+const UNKNOWN_SLOT_INDEX := 3
+
+
+## Сохранение с неизвестной культурой и неизвестным предметом (у обоих лишние ключи):
+## продолжить → «?» на поле и в панели → любое действие на клетке ничего не меняет, вода
+## не тратится → сон (известная культура рядом растёт ровно один раз) → автосохранение
+## пишет обе записи дословно.
+func test_unknown_ids_survive_play_and_sleep() -> String:
+	return await _ru(func():
+		var flow := _flow()
+		var slots: Array = [{"id": "hoe", "count": 1}, {"id": "watering_can", "count": 1},
+				{"id": "seed_silverleaf", "count": 6}, UNKNOWN_SLOT, null, null, null, null]
+		var file := FileAccess.open(PATH, FileAccess.WRITE)
+		file.store_string(JSON.stringify({
+			"save_version": SaveService.SAVE_VERSION,
+			"time": {"day": 3, "minutes": 100, "collapsed_last_night": false},
+			"farm": {"plots": [UNKNOWN_PLOT, {"x": KNOWN.x, "z": KNOWN.y, "fertility": 100.0,
+					"watered": true, "crop": "silverleaf", "growth": 1.0}]},
+			"inventory": {"slots": slots, "can_water": 5, "selected": 0},
+		}))
+		file.close()
+		flow.continue_game()
+		var err := ""
+		if flow.world == null or flow.farm == null:
+			err = "continue_game did not load the farm: %s" % flow.last_message
+		else:
+			await _tree().physics_frame
+			err = _unknown_ids_case(flow)
+		_free_flow(flow)
+		return err)
+
+
+## Как записи выглядят после круга через JSON (целые становятся float того же значения).
+func _json(v: Variant) -> Variant:
+	return JSON.parse_string(JSON.stringify(v))
+
+
+func _unknown_ids_case(flow: GameFlow) -> String:
+	var field := _node(flow, "FarmField") as FarmField
+	var plot_node := field.plot_node(CELL)
+	var mark: Label3D = null
+	if plot_node != null:
+		for n in plot_node.find_children("*", "Label3D", true, false):
+			mark = n
+	if mark == null or mark.text != "?" or field.crop_node(CELL) != null:
+		return "no «?» marker on the unknown crop cell"
+	var bar := _node(flow, "Hotbar") as Hotbar
+	if bar.slot_text(UNKNOWN_SLOT_INDEX) != "?" or bar.slot_icon(UNKNOWN_SLOT_INDEX) != null:
+		return "hotbar unknown slot shows «%s»" % bar.slot_text(UNKNOWN_SLOT_INDEX)
+	var err := _stand_at_cell(flow)
+	if err != "":
+		return err
+	var inv := flow.inventory
+	var slots_before: Array = inv.to_save()["slots"]
+	var farm_before := flow.farm.to_save()
+	for i in Inventory.SLOTS:
+		_press("hotbar_%d" % (i + 1))
+		if _hud_prompt(flow).begins_with("E"):
+			return "slot %d offers an action on the unknown crop: «%s»" % [i + 1, _hud_prompt(flow)]
+		_press("interact")
+		_press("discard_item")
+		if inv.to_save()["slots"] != slots_before or flow.farm.to_save() != farm_before:
+			return "slot %d: an action changed something" % (i + 1)
+		if inv.can_water != 5:
+			return "slot %d: can %d, expected 5" % [i + 1, inv.can_water]
+	err = _sleep(flow)
+	if err != "":
+		return err
+	var known := flow.farm.plot(KNOWN)
+	if known.get("growth") != 2.0 or known.get("watered"):
+		return "known crop after one night: %s, expected growth 2 and dry" % [known]
+	var save = JSON.parse_string(FileAccess.get_file_as_string(PATH))
+	if not save is Dictionary or int(save.get("time", {}).get("day", 0)) != 4:
+		return "autosave missing or not day 4"
+	var saved_plots: Array = save.get("farm", {}).get("plots", [])
+	if not saved_plots.has(_json(UNKNOWN_PLOT)):
+		return "unknown plot not verbatim in the file: %s" % [saved_plots]
+	var saved_slots: Array = save.get("inventory", {}).get("slots", [])
+	if saved_slots.size() != Inventory.SLOTS or saved_slots[UNKNOWN_SLOT_INDEX] != _json(UNKNOWN_SLOT):
+		return "unknown slot not verbatim in the file: %s" % [saved_slots]
+	return ""

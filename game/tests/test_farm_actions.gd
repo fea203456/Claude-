@@ -152,7 +152,10 @@ func test_water_empty_tilled_cell_allowed() -> String:
 func test_harvest_with_any_item_selected() -> String:
 	for item in [_hoe(), _can(), _seed(2), {}]:
 		var f := _farm(_plot("silverleaf", 3.0))
-		var inv := _inv([item, {"id": "boneroot", "count": 1}] if not item.is_empty() else [null])
+		# пустая рука — пустая выбранная ячейка (инструменты лежат в других: без них загрузка
+		# вернула бы стартовый набор)
+		var inv := _inv([item, {"id": "boneroot", "count": 1}] if not item.is_empty() \
+				else [null, _hoe(), _can()])
 		var r := FarmActions.resolve(f, inv, C)
 		if r["kind"] != &"harvest":
 			return "%s: %s" % [item, r]
@@ -186,7 +189,8 @@ func _atomic_case(produce_n: int, seed_n: int) -> String:
 	var plot_before := f.plot(C)
 	return _ru(func():
 		var r := FarmActions.resolve(f, inv, C)
-		if r["kind"] != &"none" or r["reason"] != &"no_room" or r["text"] != "Нет места\nЗемля: 100%":
+		if r["kind"] != &"none" or r["reason"] != &"no_room" \
+				or r["text"] != "Нет места\nX — выбросить 1 шт. выбранного урожая\nЗемля: 100%":
 			return "resolve: %s" % [r]
 		if FarmActions.perform(f, inv, C) != &"none":
 			return "perform not none"
@@ -225,7 +229,7 @@ func test_unknown_item_selected_acts_as_empty() -> String:
 
 func test_growing_prompt_names_crop_and_stage() -> String:
 	var f := _farm(_plot("silverleaf", 1.0, false, 60.0))
-	var inv := _inv([null])
+	var inv := _inv([null, _hoe(), _can()])
 	return _ru(func():
 		var t: String = FarmActions.resolve(f, inv, C)["text"]
 		if not t.begins_with("Серебрянка — побег"):

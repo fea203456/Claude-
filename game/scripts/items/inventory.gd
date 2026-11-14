@@ -108,6 +108,21 @@ func remove_from_slot(i: int, count: int) -> bool:
 	return true
 
 
+## Можно ли выбросить штуку из выбранной ячейки: только урожай, известный базе.
+## Инструменты, семена, неизвестные предметы и пустая ячейка — нельзя.
+func can_discard_selected() -> bool:
+	var def := selected_def()
+	return def != null and def.kind == &"produce" and int(_slots[selected]["count"]) >= 1
+
+
+## Выбрасывает одну штуку выбранного урожая (ячейка освобождается на нуле). false и
+## никаких изменений, если выбрасывать нельзя.
+func discard_selected_one() -> bool:
+	if not can_discard_selected():
+		return false
+	return remove_from_slot(selected, 1)
+
+
 func use_water() -> bool:
 	if can_water <= 0:
 		return false
@@ -153,8 +168,9 @@ func to_save() -> Dictionary:
 
 ## Загрузка из JSON: числа бывают float, структура может быть испорчена вручную.
 ## Ничего не бросает: мусор превращается в пустые ячейки, значения зажимаются.
-## Нет массива ячеек (или раздел не словарь) — стартовый набор; нет лейки — она полная:
-## игрок не должен остаться без инструментов и семян.
+## Нет массива ячеек (или раздел не словарь) или все ячейки пусты — стартовый набор; нет
+## лейки — она полная: игрок не должен остаться без инструментов и семян. Инструменты в
+## честной игре не теряются, поэтому пропавший инструмент возвращается в первую пустую ячейку.
 func from_save(d: Variant) -> void:
 	_slots.fill(null)
 	selected = 0
@@ -165,6 +181,12 @@ func from_save(d: Variant) -> void:
 		raw = starter_save()["slots"]
 	for i in mini(raw.size(), SLOTS):
 		_slots[i] = _load_slot(raw[i])
+	if _slots.all(func(x): return x == null):
+		var starter: Array = starter_save()["slots"]
+		for i in SLOTS:
+			_slots[i] = _load_slot(starter[i])
+	else:
+		_restore_tools()
 	var sel: Variant = src.get("selected")
 	if _is_number(sel) and is_finite(float(sel)):
 		var si := int(sel)
@@ -173,6 +195,29 @@ func from_save(d: Variant) -> void:
 	if _is_number(cw) and is_finite(float(cw)):
 		can_water = clampi(int(clampf(float(cw), -1.0, 1000.0)), 0, CAN_CAPACITY)
 	changed.emit()
+
+
+## Каждый инструмент базы (мотыга, лейка), которого нет ни в одной ячейке, — в первую пустую.
+## Нет пустой — предупреждение, инвентарь остаётся как есть.
+func _restore_tools() -> void:
+	for t in [&"hoe", &"can"]:
+		var id := _tool_id(t)
+		if id == "" or _slots.any(func(x): return x != null and x.get("id") == id):
+			continue
+		var free := _slots.find(null)
+		if free < 0:
+			push_warning("Inventory: в сохранении нет инструмента «%s» и нет места, чтобы вернуть его" % id)
+			continue
+		_slots[free] = {"id": id, "count": 1}
+
+
+## id инструмента вида tool (&"hoe" / &"can") из базы; "" — если в базе такого нет.
+func _tool_id(tool: StringName) -> String:
+	for id in db.item_ids():
+		var def := db.item(id)
+		if def.kind == &"tool" and def.tool == tool:
+			return id
+	return ""
 
 
 static func _is_number(v: Variant) -> bool:

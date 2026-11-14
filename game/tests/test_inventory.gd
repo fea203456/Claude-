@@ -6,10 +6,22 @@ func _inv() -> Inventory:
 	inv.reset_to_starter()
 	return inv
 
+## По-настоящему пустой инвентарь: всё снято со стартового набора (пустой массив ячеек
+## в сохранении теперь даёт стартовый набор).
 func _empty_inv() -> Inventory:
 	var inv := _inv()
-	inv.from_save({"slots": [], "can_water": 10, "selected": 0})
+	for i in Inventory.SLOTS:
+		var s := inv.slot(i)
+		if not s.is_empty():
+			inv.remove_from_slot(i, int(s["count"]))
 	return inv
+
+## Ячейки сохранения: восемь записей, недостающие — null.
+func _slots(head: Array) -> Array:
+	var out := head.duplicate(true)
+	while out.size() < Inventory.SLOTS:
+		out.append(null)
+	return out
 
 func test_starter_kit() -> String:
 	var inv := _inv()
@@ -157,7 +169,8 @@ func test_save_roundtrip() -> String:
 func test_unknown_ids_roundtrip() -> String:
 	var inv := _inv()
 	var orig := {"id": "moon_dust", "count": 4, "extra": 1}
-	var slots: Array = [orig.duplicate(), null, null, null, null, null, null, null]
+	var slots: Array = _slots([orig.duplicate(), {"id": "hoe", "count": 1},
+			{"id": "watering_can", "count": 1}])
 	inv.from_save({"slots": slots, "can_water": 10, "selected": 0})
 	if inv.slot(0) != orig:
 		return "slot(0) differs: %s" % inv.slot(0)
@@ -167,7 +180,7 @@ func test_unknown_ids_roundtrip() -> String:
 		return "unknown add must be refused"
 	if inv.add("silverleaf", 5) != 0 or inv.add("hoe", 1) != 0:
 		return "add other"
-	if inv.slot(0) != orig or inv.slot(1).get("id") != "silverleaf":
+	if inv.slot(0) != orig or inv.slot(3).get("id") != "silverleaf":
 		return "unknown slot disturbed"
 	if inv.remove_from_slot(0, 1):
 		return "unknown slot must be inert"
@@ -194,8 +207,9 @@ func test_from_save_tolerates_garbage() -> String:
 		{"id": 7, "count": 1},
 	]
 	inv.from_save({"slots": bad, "can_water": -1, "selected": 42})
-	if not inv.slot(0).is_empty() or not inv.slot(1).is_empty():
-		return "0 and -2 must be empty"
+	# 0 и −2 не загружаются: ячейки пусты, и в них встают недостающие инструменты
+	if inv.slot(0) != {"id": "hoe", "count": 1} or inv.slot(1) != {"id": "watering_can", "count": 1}:
+		return "0 and -2 must be empty (then hold the restored tools): %s %s" % [inv.slot(0), inv.slot(1)]
 	if inv.slot(2)["count"] != 99:
 		return "500 must clamp to 99"
 	for i in range(3, 8):
@@ -228,9 +242,99 @@ func test_from_save_without_slots_gives_starter_kit() -> String:
 	inv.from_save({"slots": null, "can_water": 4, "selected": 3})
 	if inv.can_water != 4 or inv.selected != 3:
 		return "valid can_water/selected next to missing slots must load: %d %d" % [inv.can_water, inv.selected]
-	inv.from_save({"slots": []})
-	if inv.to_save()["slots"] != [null, null, null, null, null, null, null, null]:
-		return "an empty slots array is a real empty inventory"
+	return ""
+
+## Все восемь ячеек пусты — файл испорчен (инструменты в честной игре не теряются):
+## стартовый набор. Исправные лейка и выбор рядом загружаются как есть.
+func test_from_save_all_empty_gives_starter_kit() -> String:
+	var starter: Array = Inventory.starter_save()["slots"]
+	for slots in [[], _slots([]), _slots([null, {"id": "silverleaf", "count": 0}])]:
+		var inv := _empty_inv()
+		inv.from_save({"slots": slots, "can_water": 4, "selected": 3})
+		if inv.to_save()["slots"] != starter:
+			return "%s: slots %s" % [str(slots), inv.to_save()["slots"]]
+		if inv.can_water != 4 or inv.selected != 3:
+			return "%s: can %d selected %d" % [str(slots), inv.can_water, inv.selected]
+	return ""
+
+## Семена есть, инструментов нет: каждый недостающий инструмент — в первую пустую ячейку,
+## остальное не тронуто.
+func test_from_save_adds_missing_tools() -> String:
+	var inv := _empty_inv()
+	inv.from_save({"slots": _slots([{"id": "seed_silverleaf", "count": 4}, null,
+			{"id": "boneroot", "count": 2}]), "can_water": 10, "selected": 0})
+	var want := _slots([{"id": "seed_silverleaf", "count": 4}, {"id": "hoe", "count": 1},
+			{"id": "boneroot", "count": 2}, {"id": "watering_can", "count": 1}])
+	if inv.to_save()["slots"] != want:
+		return "both tools missing: %s" % [inv.to_save()["slots"]]
+	inv.from_save({"slots": _slots([{"id": "hoe", "count": 1}, {"id": "seed_boneroot", "count": 3}]),
+			"can_water": 10, "selected": 0})
+	want = _slots([{"id": "hoe", "count": 1}, {"id": "seed_boneroot", "count": 3},
+			{"id": "watering_can", "count": 1}])
+	if inv.to_save()["slots"] != want:
+		return "can missing: %s" % [inv.to_save()["slots"]]
+	return ""
+
+## Восемь занятых ячеек без инструментов: места нет — предупреждение, инвентарь как в файле.
+func test_from_save_full_without_tools_unchanged() -> String:
+	var slots: Array = []
+	for i in Inventory.SLOTS:
+		slots.append({"id": "silverleaf" if i % 2 == 0 else "seed_boneroot", "count": i + 1})
+	slots[5] = {"id": "moon_dust", "count": 2, "extra": "x"}
+	var inv := _empty_inv()
+	inv.from_save({"slots": slots.duplicate(true), "can_water": 10, "selected": 0})
+	if inv.to_save()["slots"] != slots:
+		return "changed: %s" % [inv.to_save()["slots"]]
+	if inv.count_of("hoe") != 0 or inv.count_of("watering_can") != 0:
+		return "a tool appeared"
+	return ""
+
+# --- выбрасывание урожая ---
+
+func test_discard_selected_produce() -> String:
+	var inv := _inv()
+	inv.add("silverleaf", 3)
+	inv.select(5)
+	if inv.slot(5) != {"id": "silverleaf", "count": 3}:
+		return "setup: %s" % inv.slot(5)
+	var n := [0]
+	inv.changed.connect(func(): n[0] += 1)
+	if not inv.can_discard_selected():
+		return "produce must be discardable"
+	if not inv.discard_selected_one() or inv.slot(5).get("count") != 2 or n[0] != 1:
+		return "first discard: %s, changed %d" % [inv.slot(5), n[0]]
+	if not inv.discard_selected_one() or not inv.discard_selected_one():
+		return "second/third discard refused"
+	if not inv.slot(5).is_empty() or n[0] != 3:
+		return "last unit must empty the slot: %s, changed %d" % [inv.slot(5), n[0]]
+	if inv.can_discard_selected() or inv.discard_selected_one() or n[0] != 3:
+		return "empty slot after discarding must refuse"
+	if inv.count_of("seed_silverleaf") != 6 or inv.count_of("hoe") != 1:
+		return "other slots touched"
+	return ""
+
+## Инструмент, семена, неизвестный предмет и пустую ячейку выбросить нельзя: ничего не меняется.
+func test_discard_refused_for_non_produce() -> String:
+	var orig := {"id": "moon_dust", "count": 4, "extra": {"a": 1}}
+	var inv := _inv()
+	inv.from_save({"slots": _slots([{"id": "hoe", "count": 1}, {"id": "watering_can", "count": 1},
+			{"id": "seed_silverleaf", "count": 6}, orig.duplicate(true), null,
+			{"id": "silverleaf", "count": 5}]), "can_water": 10, "selected": 0})
+	for i in [0, 1, 2, 3, 4]:
+		inv.select(i)
+		var before := inv.to_save()
+		var n := [0]
+		var count := func(): n[0] += 1
+		inv.changed.connect(count)
+		var can: bool = inv.can_discard_selected()
+		var did: bool = inv.discard_selected_one()
+		inv.changed.disconnect(count)
+		if can or did:
+			return "slot %d (%s): can %s, discarded %s" % [i, inv.slot(i), can, did]
+		if inv.to_save() != before or n[0] != 0:
+			return "slot %d changed: %s, changed %d" % [i, inv.slot(i), n[0]]
+	if inv.slot(3) != orig or inv.to_save()["slots"][3] != orig:
+		return "unknown slot not verbatim: %s" % inv.slot(3)
 	return ""
 
 ## Нет лейки в разделе (или не число) — лейка полная, а не пустая.

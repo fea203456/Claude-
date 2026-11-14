@@ -353,7 +353,12 @@ func test_well_refills_and_reports_full() -> String:
 			err = "not refilled: %d" % inv.can_water
 		if err == "" and (well.prompt(null) != "Лейка полна" or well.can_interact(null)):
 			err = "full: prompt «%s»" % well.prompt(null)
-		inv.from_save({"slots": [{"id": "hoe", "count": 1}], "can_water": 0})
+		# Без лейки: загрузка возвращает пропавшие инструменты, поэтому лейку снимаем после.
+		inv.from_save({"slots": [{"id": "hoe", "count": 1}, {"id": "watering_can", "count": 1}],
+				"can_water": 0})
+		inv.remove_from_slot(1, 1)
+		if err == "" and inv.count_of("watering_can") != 0:
+			err = "setup: the watering can is still in the inventory"
 		if err == "" and well.can_interact(null):
 			err = "refills without a watering can in the inventory"
 		well.free()
@@ -423,4 +428,27 @@ func test_player_blocked_by_well() -> String:
 	elif z > well.global_position.z - 0.6:
 		err = "player walked into the well: z = %.2f, well at %.2f" % [z, well.global_position.z]
 	r["w"].free()
+	return err
+
+
+## Границы поля (FarmState.bounds) и бордюр в сцене — два источника правды: бордюр стоит
+## в центре bounds, а bounds — 12×8 клеток (x −6…5, z 2…9). Смена одного без другого
+## ломает этот тест.
+func test_border_centred_on_field_bounds() -> String:
+	var bounds := FarmState.new().bounds
+	if bounds != FIELD or bounds.size != Vector2i(12, 8):
+		return "FarmState.bounds %s, expected %s (12×8)" % [bounds, FIELD]
+	var w := (load(FARM) as PackedScene).instantiate()
+	_root().add_child(w)
+	var field := w.find_child("FarmField", true, false) as Node3D
+	var border := field.get_node_or_null("Border") as Node3D if field != null else null
+	var err := ""
+	if border == null:
+		err = "FarmField/Border not found in farm_test.tscn"
+	else:
+		var centre := Vector2(bounds.position) + Vector2(bounds.size) / 2.0
+		var at := Vector2(border.global_position.x, border.global_position.z)
+		if at.distance_to(centre) > 0.001:
+			err = "border at %s, field bounds centre %s" % [at, centre]
+	w.free()
 	return err
