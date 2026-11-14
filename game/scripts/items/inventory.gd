@@ -153,22 +153,25 @@ func to_save() -> Dictionary:
 
 ## Загрузка из JSON: числа бывают float, структура может быть испорчена вручную.
 ## Ничего не бросает: мусор превращается в пустые ячейки, значения зажимаются.
+## Нет массива ячеек (или раздел не словарь) — стартовый набор; нет лейки — она полная:
+## игрок не должен остаться без инструментов и семян.
 func from_save(d: Variant) -> void:
 	_slots.fill(null)
 	selected = 0
-	can_water = 0
-	if d is Dictionary:
-		var raw: Variant = d.get("slots")
-		if raw is Array:
-			for i in mini(raw.size(), SLOTS):
-				_slots[i] = _load_slot(raw[i])
-		var sel: Variant = d.get("selected")
-		if _is_number(sel) and is_finite(float(sel)):
-			var si := int(sel)
-			selected = si if si >= 0 and si < SLOTS else 0
-		var cw: Variant = d.get("can_water")
-		if _is_number(cw) and is_finite(float(cw)):
-			can_water = clampi(int(clampf(float(cw), -1.0, 1000.0)), 0, CAN_CAPACITY)
+	can_water = CAN_CAPACITY
+	var src: Dictionary = d if d is Dictionary else {}
+	var raw: Variant = src.get("slots")
+	if not (raw is Array):
+		raw = starter_save()["slots"]
+	for i in mini(raw.size(), SLOTS):
+		_slots[i] = _load_slot(raw[i])
+	var sel: Variant = src.get("selected")
+	if _is_number(sel) and is_finite(float(sel)):
+		var si := int(sel)
+		selected = si if si >= 0 and si < SLOTS else 0
+	var cw: Variant = src.get("can_water")
+	if _is_number(cw) and is_finite(float(cw)):
+		can_water = clampi(int(clampf(float(cw), -1.0, 1000.0)), 0, CAN_CAPACITY)
 	changed.emit()
 
 

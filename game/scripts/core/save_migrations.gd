@@ -2,8 +2,8 @@ class_name SaveMigrations
 extends RefCounted
 ## Миграции сохранений: шаг `from_version` → `from_version + 1`.
 
-## int from_version → Callable(data: Dictionary) -> Dictionary. Для v1 пусто.
-static var STEPS: Dictionary = {}
+## int from_version → Callable(data: Dictionary) -> Dictionary.
+static var STEPS: Dictionary = {1: v1_to_v2}
 
 
 ## Применяет шаги по порядку. Нет шага (или шаг вернул не Dictionary) → {}:
@@ -25,3 +25,10 @@ static func migrate(data: Dictionary, target: int, steps: Dictionary = STEPS) ->
 		version += 1
 		cur["save_version"] = version
 	return cur
+
+
+## Этап 1 → этап 2: пустое поле и стартовый инвентарь; остальные разделы как были.
+static func v1_to_v2(data: Dictionary) -> Dictionary:
+	data["farm"] = {"plots": []}
+	data["inventory"] = Inventory.starter_save()
+	return data

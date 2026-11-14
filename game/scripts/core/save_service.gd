@@ -5,7 +5,7 @@ extends Node
 ## Ошибки возвращаются кодами; в лог движка пишется только warning об освобождённом
 ## провайдере (его снимаем с регистрации, остальные разделы сохраняются как обычно).
 
-const SAVE_VERSION := 1
+const SAVE_VERSION := 2
 const SLOT_PATH := "user://save/slot_1.json"
 
 enum LoadResult { OK, NO_FILE, TOO_NEW, RESTORED_FROM_BAK, CORRUPT }

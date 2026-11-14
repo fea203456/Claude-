@@ -212,6 +212,38 @@ func test_from_save_tolerates_garbage() -> String:
 			return "junk top level"
 	return ""
 
+## Раздел без массива ячеек (или вовсе не словарь) — стартовый набор: игрок не остаётся
+## без инструментов и семян.
+func test_from_save_without_slots_gives_starter_kit() -> String:
+	var starter := Inventory.starter_save()
+	for junk in [null, "x", 5, [], {}, {"slots": "no"}, {"slots": null, "can_water": 4},
+			{"slots": "no", "can_water": "no", "selected": []}]:
+		var inv := _empty_inv()
+		inv.from_save(junk)
+		if inv.to_save()["slots"] != starter["slots"]:
+			return "%s: slots %s" % [str(junk), inv.to_save()["slots"]]
+		if inv.selected != 0:
+			return "%s: selected %d" % [str(junk), inv.selected]
+	var inv := _empty_inv()
+	inv.from_save({"slots": null, "can_water": 4, "selected": 3})
+	if inv.can_water != 4 or inv.selected != 3:
+		return "valid can_water/selected next to missing slots must load: %d %d" % [inv.can_water, inv.selected]
+	inv.from_save({"slots": []})
+	if inv.to_save()["slots"] != [null, null, null, null, null, null, null, null]:
+		return "an empty slots array is a real empty inventory"
+	return ""
+
+## Нет лейки в разделе (или не число) — лейка полная, а не пустая.
+func test_from_save_missing_can_water_is_full() -> String:
+	for d in [{"slots": []}, {"slots": [], "can_water": "no"}, {"slots": [], "can_water": null},
+			{"slots": [], "can_water": NAN}, null]:
+		var inv := _empty_inv()
+		inv.use_water()
+		inv.from_save(d)
+		if inv.can_water != Inventory.CAN_CAPACITY:
+			return "%s: can_water %d" % [str(d), inv.can_water]
+	return ""
+
 func test_changed_emitted() -> String:
 	var inv := _inv()
 	var n := [0]
