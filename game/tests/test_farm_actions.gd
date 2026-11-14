@@ -156,13 +156,16 @@ func test_harvest_adds_produce_and_seeds() -> String:
 			return "cell state"
 		return "")
 
-func test_harvest_is_atomic() -> String:
+## Все 8 ячеек заняты; produce и seeds серебрянки лежат стопками заданного размера.
+func _full_inv(produce_n: int, seed_n: int) -> Inventory:
+	return _inv([_hoe(), _can(), {"id": "silverleaf", "count": produce_n},
+			{"id": "seed_silverleaf", "count": seed_n}, {"id": "boneroot", "count": 1},
+			{"id": "nightbloom", "count": 1}, {"id": "seed_boneroot", "count": 1},
+			{"id": "seed_nightbloom", "count": 1}])
+
+func _atomic_case(produce_n: int, seed_n: int) -> String:
 	var f := _farm(_plot("silverleaf", 3.0))
-	var slots: Array = [_hoe(), _can(), {"id": "silverleaf", "count": 98}]
-	for id in ["boneroot", "nightbloom", "seed_boneroot", "seed_nightbloom", "seed_silverleaf"]:
-		slots.append({"id": id, "count": 99 if id == "seed_silverleaf" else 1})
-	# ячеек 8: hoe, can, silverleaf 98, boneroot, nightbloom, seed_boneroot, seed_nightbloom, seed_silverleaf 99
-	var inv := _inv(slots)
+	var inv := _full_inv(produce_n, seed_n)
 	var before := inv.to_save()
 	var plot_before := f.plot(C)
 	return _ru(func():
@@ -174,6 +177,14 @@ func test_harvest_is_atomic() -> String:
 		if inv.to_save() != before or f.plot(C) != plot_before or not f.is_ripe(C):
 			return "state changed"
 		return "")
+
+## Урожай (97 + 2) помещается, семена (99 + 2) нет: не собрано ничего.
+func test_harvest_is_atomic() -> String:
+	return _atomic_case(97, 99)
+
+## Зеркально: семена (97 + 2) помещаются, урожай (99 + 2) нет.
+func test_harvest_is_atomic_seeds_fit_produce_does_not() -> String:
+	return _atomic_case(99, 97)
 
 func test_unknown_crop_cell_inert() -> String:
 	var f := _farm(_plot("void_melon", 5.0))
