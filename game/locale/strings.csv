@@ -27,3 +27,14 @@ STAGE_0,росток,sprout
 STAGE_1,побег,shoot
 STAGE_2,взрослое,grown
 STAGE_3,спелое,ripe
+PROMPT_TILL,E — вскопать,E — till
+PROMPT_PLANT_FMT,E — посадить: {crop},E — plant: {crop}
+PROMPT_WATER,E — полить,E — water
+PROMPT_HARVEST,E — собрать,E — harvest
+PROMPT_CAN_EMPTY,Лейка пуста,The can is empty
+PROMPT_ALREADY_WATERED,Уже полито,Already watered
+PROMPT_CANT_TILL,Здесь нельзя копать,Can't dig here
+PROMPT_NO_ROOM,Нет места,No room
+PROMPT_GROWING_FMT,{crop} — {stage},{crop} — {stage}
+PROMPT_UNKNOWN_PLANT,Неизвестное растение,Unknown plant
+SOIL_FMT,Земля: {pct}%,Soil: {pct}%
