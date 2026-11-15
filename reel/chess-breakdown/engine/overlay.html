@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><title>Chess overlay</title>
+<style>
+  html,body{margin:0;width:1080px;height:1920px;background:transparent;overflow:hidden}
+  body{font-family:"Inter",sans-serif;color:#fff;-webkit-font-smoothing:antialiased}
+  .abs{position:absolute}
+  .glass{background:rgba(58,58,64,.50);border:2px solid rgba(255,255,255,.12);border-radius:30px;box-sizing:border-box}
+  #card{left:60px;top:250px;width:960px;height:362px;padding:32px 40px 28px}
+  .label{font-size:22px;font-weight:600;letter-spacing:.15em;text-transform:uppercase;color:rgba(255,255,255,.52);height:30px;display:flex;align-items:center;gap:12px}
+  .dot{width:14px;height:14px;border-radius:50%;background:#E0443A}
+  .badge{position:absolute;right:30px;top:24px;height:44px;display:flex;align-items:center;gap:10px;padding:0 18px 0 8px;border-radius:999px;background:rgba(255,255,255,.10);font-size:23px;font-weight:600}
+  .badge .ic{width:30px;height:30px;font-size:16px}
+  .badge.light{background:#fff;color:#111;padding:0 20px 0 16px}
+  .ic{border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;flex:none;letter-spacing:-.04em}
+  .title{margin-top:14px;font-family:"Inter Display","Inter",sans-serif;font-weight:800;font-size:62px;line-height:1.06;letter-spacing:-.01em}
+  .text{margin-top:16px;font-size:31px;line-height:1.32;font-weight:500;color:rgba(255,255,255,.88)}
+  .text .rest{opacity:0}
+  .better{margin-top:14px;font-size:29px;line-height:1.3;color:rgba(255,255,255,.5);font-weight:500}
+  .better b{color:#fff;font-weight:700}
+  #players{left:60px;top:634px;width:960px;height:140px}
+  .pl{position:absolute;top:0;display:flex;align-items:center;gap:18px}
+  .pl.r{right:0;flex-direction:row-reverse;text-align:right}
+  .av{width:78px;height:78px;border-radius:50%;background-size:cover;background-position:center;border:2px solid rgba(255,255,255,.25);box-sizing:border-box}
+  .nm{font-size:34px;font-weight:700;line-height:1.1}
+  .sd{font-size:23px;color:rgba(255,255,255,.5);font-weight:500}
+  .pc{position:absolute;top:92px;font-size:24px;font-weight:700}
+  #bar{position:absolute;left:0;top:128px;width:960px;height:7px;border-radius:4px;background:rgba(255,255,255,.22);overflow:hidden}
+  #fill{height:100%;background:#fff;border-radius:4px}
+  #popup{left:0;top:0;display:flex;align-items:center;gap:22px;padding:20px 40px 20px 20px;border-radius:26px;background:rgba(20,20,22,.88);border:1.5px solid rgba(255,255,255,.10);box-shadow:0 18px 50px rgba(0,0,0,.45)}
+  #popup .ic{width:76px;height:76px;font-size:34px}
+  #popup .pt{font-size:40px;font-weight:700;line-height:1.1}
+  #popup .ps{font-size:26px;color:rgba(255,255,255,.55);font-weight:500;margin-top:4px}
+  #sub{left:60px;width:960px;top:1462px;text-align:center}
+  #sub span{display:inline-block;max-width:940px;background:rgba(0,0,0,.55);padding:10px 22px 12px;border-radius:12px;font-size:42px;line-height:1.25;font-weight:600;box-decoration-break:clone;-webkit-box-decoration-break:clone}
+  #summary{left:60px;top:250px;width:960px;height:1180px;padding:36px 44px;background:rgba(40,40,46,.62)}
+  .sm-src{font-size:27px;color:rgba(255,255,255,.6);margin-top:8px;font-weight:500}
+  .sm-score{display:flex;align-items:center;gap:30px;margin-top:16px}
+  .sm-score .big{font-family:"Inter Display","Inter";font-size:140px;font-weight:900;line-height:1;letter-spacing:-.03em}
+  .sm-score .w{font-size:38px;font-weight:700}
+  .sm-score .m{font-size:26px;color:rgba(255,255,255,.5);margin-top:6px}
+  .sm-moral{font-size:32px;line-height:1.34;font-weight:500;margin-top:22px;color:rgba(255,255,255,.9)}
+  .hr{height:2px;background:rgba(255,255,255,.1);margin:26px 0}
+  .acc{display:flex;gap:60px}
+  .acc>div{flex:1}
+  .acc .who{display:flex;align-items:center;gap:14px}
+  .acc .av{width:56px;height:56px}
+  .acc .n{font-size:30px;font-weight:700}
+  .acc .s{font-size:21px;color:rgba(255,255,255,.5)}
+  .acc .val{font-family:"Inter Display","Inter";font-size:92px;font-weight:800;margin-top:14px;line-height:1}
+  .acc .val small{font-size:40px;font-weight:700;color:rgba(255,255,255,.5);margin-left:6px}
+  .acc .lb{font-size:20px;letter-spacing:.16em;color:rgba(255,255,255,.45);margin-top:12px;font-weight:600}
+  .tb .hd,.tb .row{display:grid;grid-template-columns:1fr 130px 130px;align-items:center}
+  .tb .hd{font-size:20px;letter-spacing:.16em;color:rgba(255,255,255,.45);font-weight:600;margin-bottom:12px}
+  .tb .row{font-size:31px;font-weight:600;height:56px}
+  .tb .row .k{display:flex;align-items:center;gap:16px}
+  .tb .row .ic{width:36px;height:36px;font-size:17px}
+  .tb .c{text-align:center}
+  .tb .z{color:rgba(255,255,255,.3)}
+</style></head>
+<body>
+<div id="root">
+  <div id="card" class="abs glass"></div>
+  <div id="players" class="abs">
+    <div class="pl" id="pw"><div class="av" id="aw"></div><div><div class="nm" id="nw"></div><div class="sd">Белые</div></div></div>
+    <div class="pl r" id="pb"><div class="av" id="ab"></div><div><div class="nm" id="nb"></div><div class="sd">Чёрные</div></div></div>
+    <div class="pc" id="ew" style="left:0"></div><div class="pc" id="eb" style="right:0"></div>
+    <div id="bar"><div id="fill"></div></div>
+  </div>
+  <div id="popup" class="abs"></div>
+  <div id="sub" class="abs"></div>
+  <div id="summary" class="abs glass"></div>
+</div>
+<script>
+const G={brilliant:["Блестящий ход","!!","#1BADA6",100],great:["Сильный ход","!","#5B8BB0",95],good:["Хороший ход","✓","#9DB28A",90],
+  inaccuracy:["Неточность","?!","#F0C24B",70],mistake:["Ошибка","?","#E58F2A",45],blunder:["Зевок","??","#E0443A",15],mate:["Мат","#","#3A3A40",null]};
+const ORDER=["brilliant","great","good","inaccuracy","mistake","blunder"];
+const VIDEO={top:790,h:640};
+let S,T0,TL,evs=[],moves=[];
+const $=id=>document.getElementById(id);
+const clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x));
+const ease=x=>1-Math.pow(1-clamp(x),3);
+const r2=x=>Math.round(x*100)/100;
+const esc=s=>s.replace(/&/g,"&amp;").replace(/</g,"&lt;");
+const ic=(g,extra="")=>`<div class="ic" style="background:${G[g][2]};${extra}">${G[g][1]}</div>`;
+const sideName=s=>s==="white"?S.white.name:S.black.name;
+const fmt=x=>x.toFixed(1).replace(".",",");
+
+window.init=(script,assetBase)=>{
+  S=script; T0=S.teaser?S.teaser.src_to-S.teaser.src_from:0; TL=S.end+T0;
+  evs=S.events.slice().sort((a,b)=>a.t-b.t);
+  moves=evs.filter(e=>e.type==="move"||e.type==="mate");
+  $("aw").style.backgroundImage=`url("${assetBase}/${S.white.avatar}")`;
+  $("ab").style.backgroundImage=`url("${assetBase}/${S.black.avatar}")`;
+  $("nw").textContent=S.white.name; $("nb").textContent=S.black.name;
+  // stats
+  const acc=side=>{const m=moves.filter(e=>e.side===side&&G[e.grade]&&G[e.grade][3]!=null);return m.length?m.reduce((s,e)=>s+G[e.grade][3],0)/m.length:0};
+  S._acc={white:acc("white"),black:acc("black")};
+  S._cnt={};for(const g of ORDER)S._cnt[g]={white:moves.filter(e=>e.grade===g&&e.side==="white").length,black:moves.filter(e=>e.grade===g&&e.side==="black").length};
+  return {duration:TL,T0,acc:S._acc,cnt:S._cnt,moves:moves.length};
+};
+
+function cardHTML(e,t){
+  let label="",badge="";
+  if(e.type==="intro"){label=`<span class="dot"></span>Шахматный разбор №${S.number}`;}
+  else if(e.type==="start"){label=`Шахматный разбор №${S.number}`;badge=`<div class="badge light">▶&nbsp;Партия началась</div>`;}
+  else if(e.type==="fact"){label="Факт";}
+  else {label=`Ход ${e.n} · ${esc(sideName(e.side))}`;const g=e.type==="mate"?"mate":e.grade;badge=`<div class="badge">${ic(g)}${G[g][0]}</div>`;}
+  const n=Math.floor(Math.max(0,t-e.t-0.3)*45), txt=e.text||"";
+  const shown=txt.slice(0,n), rest=txt.slice(n);
+  const better=e.better&&n>=txt.length?`<div class="better">Лучше было: <b>${esc(e.better)}</b></div>`:(e.better?`<div class="better" style="opacity:0">Лучше было: <b>${esc(e.better)}</b></div>`:"");
+  return `<div class="label">${label}</div>${badge}<div class="title" style="font-size:${e._fs||62}px">${esc(e.title)}</div><div class="text">${esc(shown)}<span class="rest">${esc(rest)}</span></div>${better}`;
+}
+function fitTitles(){ // deterministic: shrink title until the card content fits
+  for(const e of evs){ if(e.type==="summary")continue; e._fs=62;
+    for(;;){ $("card").innerHTML=cardHTML(e,1e9); const c=$("card"); if(c.scrollHeight<=c.clientHeight+1||e._fs<=44)break; e._fs-=2; } }
+}
+window.fit=()=>{fitTitles();return evs.filter(e=>e._fs&&e._fs<62).map(e=>[e.title,e._fs]);};
+
+function evalAt(src){
+  let v=S.teaser?S.teaser.eval:50, from=v, t0=-1;
+  for(const e of evs){ if(e.eval==null)continue; const at=e.popup_t??e.t; if(src>=at){from=v;v=e.eval;t0=at;} }
+  if(t0<0) return v; const k=ease((src-t0)/0.6); return from+(v-from)*k;
+}
+
+window.renderAt=(out)=>{
+  const teaser=S.teaser&&out<T0, src=teaser?S.teaser.src_from+out:out-T0;
+  const summary=evs.find(e=>e.type==="summary"&&src>=e.t&&!teaser);
+  // current card event
+  let cur=null; if(!teaser) for(const e of evs){ if(e.type==="summary")break; if(src>=e.t)cur=e; }
+  const card=$("card");
+  if(cur&&!summary){ const k=ease((src-cur.t)/0.35); card.style.opacity=r2(k); card.style.transform=`translateY(${r2((1-k)*12)}px)`; card.innerHTML=cardHTML(cur,src); }
+  else { card.style.opacity=0; card.innerHTML=""; }
+  // players + eval
+  const sk=summary?ease((src-summary.t)/0.5):0;
+  $("players").style.opacity=r2(1-sk);
+  const ev=teaser?S.teaser.eval:evalAt(src), w=Math.round(ev*10)/10;
+  $("fill").style.width=w+"%"; $("ew").textContent=Math.round(ev)+"%"; $("eb").textContent=(100-Math.round(ev))+"%";
+  const act=cur&&(cur.type==="move"||cur.type==="mate")?cur.side:null;
+  $("aw").style.boxShadow=act==="white"?"0 0 0 4px rgba(255,255,255,.85),0 0 24px rgba(255,255,255,.35)":"none";
+  $("ab").style.boxShadow=act==="black"?"0 0 0 4px rgba(255,255,255,.85),0 0 24px rgba(255,255,255,.35)":"none";
+  // popup
+  const pop=$("popup"); let pe=null;
+  if(!teaser) for(const e of moves){ if(e.popup_t!=null&&src>=e.popup_t&&src<e.popup_t+1.9)pe=e; }
+  if(pe&&!summary){ const a=src-pe.popup_t, inK=ease(a/0.25), outK=clamp((1.9-a)/0.3); const g=pe.type==="mate"?"mate":pe.grade;
+    pop.innerHTML=`${ic(g)}<div><div class="pt">${G[g][0]}</div><div class="ps">${pe.type==="mate"?esc(sideName(pe.side))+" ставит мат":esc(pe.title)}</div></div>`;
+    pop.style.opacity=r2(Math.min(inK,outK)); const sc=r2(0.9+0.1*inK);
+    pop.style.visibility="hidden"; pop.style.transform="none"; const w0=pop.offsetWidth,h0=pop.offsetHeight; pop.style.visibility="visible";
+    pop.style.transform=`translate(${Math.round((1080-w0)/2)}px,${Math.round(VIDEO.top+VIDEO.h/2-h0/2)}px) scale(${sc})`;
+  } else { pop.style.opacity=0; pop.innerHTML=""; }
+  // subtitles
+  let sb=null; for(const s of S.subtitles){ if(src>=s.t0&&src<s.t1+0.25&&(!teaser||s.t0>=S.teaser.src_from-0.5))sb=s; }
+  $("sub").innerHTML=sb?`<span>${esc(sb.text)}</span>`:"";
+  // summary
+  const sm=$("summary");
+  if(summary){ const a=src-summary.t; sm.style.opacity=r2(sk); sm.style.transform=`translateY(${r2((1-sk)*16)}px)`;
+    const [rw,rb]=summary.result.split("-"); const res=summary.result==="1-0"?"Победа белых":summary.result==="0-1"?"Победа чёрных":"Ничья";
+    const win=summary.result==="1-0"?"white":summary.result==="0-1"?"black":null; const score=summary.result==="1/2-1/2"?"½–½":`${rw}–${rb}`;
+    const cnt=ease((a-0.6)/1.4);
+    const accB=side=>{const v=S._acc[side]*cnt; const dim=win&&side!==win; return `<div><div class="who"><div class="av" style='background-image:${$(side==="white"?"aw":"ab").style.backgroundImage.replace(/'/g,"%27")}'></div><div><div class="n">${esc(sideName(side))}</div><div class="s">${side==="white"?"Белые":"Чёрные"}</div></div></div><div class="val" style="color:${dim?"rgba(255,255,255,.38)":"#fff"}">${fmt(v)}<small>%</small></div><div class="lb">ТОЧНОСТЬ</div></div>`;};
+    const rows=ORDER.filter(g=>S._cnt[g].white+S._cnt[g].black>0).map((g,i)=>{const o=r2(ease((a-1.4-i*0.15)/0.3));const c=S._cnt[g];return `<div class="row" style="opacity:${o}"><div class="k">${ic(g)}${G[g][0]}</div><div class="c ${c.white?"":"z"}">${c.white}</div><div class="c ${c.black?"":"z"}">${c.black}</div></div>`}).join("");
+    sm.innerHTML=`<div class="label">Итоги партии</div><div class="sm-src">${esc(summary.subtitle||(S.source+" · "+S.white.name+" против "+S.black.name))}</div>
+      <div class="sm-score"><div class="big">${score}</div><div><div class="w">${res}</div><div class="m">${win?esc(sideName(win))+" · ":""}${moves.length} ${plural(moves.length)}</div></div></div>
+      <div class="sm-moral">${esc(summary.moral)}</div><div class="hr"></div><div class="acc">${accB("white")}${accB("black")}</div><div class="hr"></div>
+      <div class="tb"><div class="hd"><div>ХОДЫ</div><div class="c">БЕЛЫЕ</div><div class="c">ЧЁРНЫЕ</div></div>${rows}</div>`;
+  } else { sm.style.opacity=0; sm.innerHTML=""; }
+  return $("root").innerHTML.length+":"+hash($("root").innerHTML);
+};
+function plural(n){const a=n%10,b=n%100;return a===1&&b!==11?"ход":a>=2&&a<=4&&(b<10||b>=20)?"хода":"ходов";}
+function hash(s){let h=0;for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))|0;return h;}
+</script>
+</body></html>
