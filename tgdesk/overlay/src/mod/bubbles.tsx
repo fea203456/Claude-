@@ -130,7 +130,8 @@ export const TgModHeaderEffect = (props: {effect: TgModEffectId, items: TgModMed
       if(body.x < r * .6) { body.x = r * .6; body.vx = Math.abs(body.vx); }
       if(body.x > width - r * .6) { body.x = width - r * .6; body.vx = -Math.abs(body.vx); }
       if(body.y < r * .6) { body.y = r * .6; body.vy = Math.abs(body.vy); }
-      if(body.y > height - r * .6) { body.y = height - r * .6; body.vy = -Math.abs(body.vy); }
+      // * the bottom edge takes the whole bubble: it must never lie over the buttons below
+      if(body.y > height - r) { body.y = height - r; body.vy = -Math.abs(body.vy); }
 
       // * the avatar pushes small bubbles away; a swollen one floats over it
       if(body.swell < 1.2) {
