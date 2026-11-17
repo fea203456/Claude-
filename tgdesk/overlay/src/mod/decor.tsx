@@ -13,7 +13,8 @@ import {getTgModProfile, getTgModSyncUrl, isTgModSignedIn, onTgModProfileUpdated
 import {toastNew} from '@components/toast';
 import {TGMOD_FRAMES} from '@/mod/frames';
 import {TgModMediaView} from '@/mod/media';
-import {TgModHeaderEffect} from '@/mod/bubbles';
+import {TgModFloatingItem, TgModHeaderEffect} from '@/mod/bubbles';
+import {TgModGiftView} from '@/mod/media';
 import '@/mod/decor.scss';
 
 export {TgModMediaView};
@@ -36,6 +37,14 @@ function useTgModProfile(peerId: () => PeerId) {
     ({userId, version}) => getTgModProfile(userId, version > 0)
   );
   return profile;
+}
+
+// * what floats in the header: the gifts worn as decoration first, then the showcase, ten at most
+function floating(profile: TgModRemoteProfile): TgModFloatingItem[] {
+  return [
+    ...profile.gifts.map((gift) => ({gift})),
+    ...profile.showcase.map((media) => ({media}))
+  ].slice(0, 10);
 }
 
 /**
@@ -72,10 +81,13 @@ export const TgModProfileHeader = (props: {peerId: PeerId, container: HTMLElemen
           )}
         </Show>
       </div>
-      <Show keyed when={profile()?.effect && profile().showcase.length ? profile() : undefined}>
+      <Show keyed when={profile()?.effect && floating(profile()).length ? profile() : undefined}>
         {(value) => (
-          <TgModHeaderEffect effect={value.effect} items={value.showcase} container={props.container} />
+          <TgModHeaderEffect effect={value.effect} items={floating(value)} container={props.container} />
         )}
+      </Show>
+      <Show when={profile() && (profile().frame || profile().banner || (profile().effect && floating(profile()).length))}>
+        <div class="tgmod-header-badge">{i18n('TgMod.Showcase.Badge')}</div>
       </Show>
     </div>
   );
@@ -85,6 +97,7 @@ export const TgModProfileHeader = (props: {peerId: PeerId, container: HTMLElemen
 export const TgModShowcase = (props: {peerId: PeerId}) => {
   const profile = useTgModProfile(() => props.peerId);
   const items = () => profile()?.showcase ?? [];
+  const gifts = () => profile()?.gifts ?? [];
   const isMe = () => props.peerId === rootScope.myId;
   const [reported, setReported] = createSignal(false);
   const report = () => {
@@ -95,7 +108,7 @@ export const TgModShowcase = (props: {peerId: PeerId}) => {
   };
 
   return (
-    <Show when={items().length || profile()?.caption}>
+    <Show when={items().length || gifts().length || profile()?.caption}>
       <Section
         name="TgMod.Showcase"
         caption={isMe() ? 'TgMod.Showcase.CaptionMine' : 'TgMod.Showcase.Caption'}
@@ -105,6 +118,11 @@ export const TgModShowcase = (props: {peerId: PeerId}) => {
           <div class="tgmod-showcase-caption" dir="auto">{profile().caption}</div>
         </Show>
         <div class="tgmod-showcase">
+          <For each={gifts()}>{(gift) => (
+            <div class="tgmod-showcase-item is-gift">
+              <TgModGiftView gift={gift} size={96} />
+            </div>
+          )}</For>
           <For each={items()}>{(media) => (
             <div class="tgmod-showcase-item">
               <TgModMediaView media={media} size={96} />

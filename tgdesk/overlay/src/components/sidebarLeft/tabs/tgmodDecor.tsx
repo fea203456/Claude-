@@ -31,10 +31,15 @@ import {
   uploadTgModMedia
 } from '@/mod/sync';
 import {TgModMediaView} from '@/mod/decor';
+import {TgModGiftView} from '@/mod/media';
+import {canTgModGiftLookCollectible, getTgModGiftCatalogue, getTgModGiftPreview} from '@/mod/gifts';
+import type {MyStarGift, StarGiftUpgradePreview} from '@appManagers/appGiftsManager';
+import type {TgModGiftRef} from '@/mod/sync';
 import '@components/sidebarLeft/tabs/tgmod.scss';
 
 const MAX_SIZE = 2 * 1024 * 1024;
 const SHOWCASE_MAX = 8;
+const GIFTS_MAX = 8;
 
 const showError = (err: unknown) => {
   toastNew({langPackKey: 'TgMod.Decor.Error', langPackArguments: [(err as TgModSyncError)?.code ?? String(err)]});
@@ -53,6 +58,11 @@ const TgModDecorTab = () => {
   const [effect, setEffect] = createSignal<TgModEffectId | null>('bubbles');
   const [banner, setBanner] = createSignal<TgModMedia | null>(null);
   const [showcase, setShowcase] = createSignal<TgModMedia[]>([]);
+  const [gifts, setGifts] = createSignal<TgModGiftRef[]>([]);
+  // * the gift picker: closed, the catalogue, or one gift's collectible models
+  const [picker, setPicker] = createSignal<'closed' | 'catalogue' | MyStarGift>('closed');
+  const [catalogue, setCatalogue] = createSignal<MyStarGift[]>([]);
+  const [preview, setPreview] = createSignal<StarGiftUpgradePreview>();
   let captionField: InputField;
 
   const loadMine = async() => {
@@ -62,6 +72,7 @@ const TgModDecorTab = () => {
     if(profile) setEffect(profile.effect ?? null);
     setBanner(profile?.banner ?? null);
     setShowcase(profile?.showcase ?? []);
+    setGifts(profile?.gifts ?? []);
     if(captionField) captionField.value = profile?.caption ?? '';
   };
   onMount(loadMine);
@@ -129,6 +140,36 @@ const TgModDecorTab = () => {
     if(media && !showcase().some((m) => m.id === media.id)) setShowcase([...showcase(), media].slice(0, SHOWCASE_MAX));
   });
 
+  const openCatalogue = async() => {
+    setPicker('catalogue');
+    try {
+      setCatalogue(await getTgModGiftCatalogue());
+    } catch(err) {
+      showError(err);
+    }
+  };
+
+  const pickGift = async(gift: MyStarGift) => {
+    if(!canTgModGiftLookCollectible(gift)) {
+      addGift({gift_id: String(gift.raw.id), model: null, backdrop: null});
+      return;
+    }
+    setPreview(undefined);
+    setPicker(gift);
+    setPreview(await getTgModGiftPreview(String(gift.raw.id)));
+  };
+
+  const addGift = (ref: TgModGiftRef) => {
+    if(gifts().length >= GIFTS_MAX) return;
+    setGifts([...gifts(), ref]);
+    setPicker('closed');
+  };
+
+  const pickedGift = () => {
+    const value = picker();
+    return typeof value === 'object' ? value : undefined;
+  };
+
   const publish = async() => {
     setBusy(true);
     try {
@@ -137,6 +178,7 @@ const TgModDecorTab = () => {
         effect: effect(),
         banner: banner()?.id ?? null,
         showcase: showcase().map((m) => m.id),
+        gifts: gifts(),
         caption: captionField?.value.trim() || null
       });
       toastNew({langPackKey: 'TgMod.Decor.Published'});
@@ -159,6 +201,7 @@ const TgModDecorTab = () => {
       setFrame(null);
       setBanner(null);
       setShowcase([]);
+      setGifts([]);
       if(captionField) captionField.value = '';
       toastNew({langPackKey: 'TgMod.Decor.Cleared'});
     } catch(err) {
@@ -252,6 +295,69 @@ const TgModDecorTab = () => {
             <Row clickable={() => setBanner(null)}>
               <Row.Icon icon="delete" />
               <Row.Title>{i18n('TgMod.Decor.Banner.Remove')}</Row.Title>
+            </Row>
+          </Show>
+        </Section>
+
+        <Section name="TgMod.Decor.Gifts" caption="TgMod.Decor.Gifts.Caption">
+          <Show when={gifts().length}>
+            <div class="tgmod-decor-showcase">
+              <For each={gifts()}>{(gift, i) => (
+                <button
+                  type="button"
+                  class="tgmod-decor-showcase-item"
+                  aria-label="Remove"
+                  onClick={() => setGifts(gifts().filter((_, k) => k !== i()))}
+                >
+                  <TgModGiftView gift={gift} size={72} />
+                  <span class="tgmod-decor-showcase-remove">×</span>
+                </button>
+              )}</For>
+            </div>
+          </Show>
+          <Show when={picker() === 'closed' && gifts().length < GIFTS_MAX}>
+            <Row clickable={openCatalogue}>
+              <Row.Icon icon="gift" />
+              <Row.Title>{i18n('TgMod.Decor.Gifts.Add')}</Row.Title>
+            </Row>
+          </Show>
+          <Show when={picker() === 'catalogue'}>
+            <div class="tgmod-decor-picker">
+              <For each={catalogue()}>{(gift) => (
+                <button type="button" class="tgmod-decor-showcase-item" onClick={() => pickGift(gift)}>
+                  <TgModGiftView gift={{gift_id: String(gift.raw.id), model: null, backdrop: null}} size={64} />
+                </button>
+              )}</For>
+            </div>
+          </Show>
+          <Show when={pickedGift()}>
+            {(gift) => (
+              <div class="tgmod-decor-picker">
+                <button type="button" class="tgmod-decor-showcase-item" onClick={() => addGift({gift_id: String(gift().raw.id), model: null, backdrop: null})}>
+                  <TgModGiftView gift={{gift_id: String(gift().raw.id), model: null, backdrop: null}} size={64} />
+                  <span class="tgmod-decor-picker-label">{i18n('TgMod.Decor.Gifts.Plain')}</span>
+                </button>
+                <For each={preview()?.models ?? []}>{(model, i) => {
+                  const backdrops = () => preview()?.backdrops ?? [];
+                  const ref = (): TgModGiftRef => ({
+                    gift_id: String(gift().raw.id),
+                    model: model.name,
+                    backdrop: backdrops().length ? backdrops()[i() % backdrops().length].name : null
+                  });
+                  return (
+                    <button type="button" class="tgmod-decor-showcase-item" onClick={() => addGift(ref())}>
+                      <TgModGiftView gift={ref()} size={64} />
+                      <span class="tgmod-decor-picker-label">{model.name}</span>
+                    </button>
+                  );
+                }}</For>
+              </div>
+            )}
+          </Show>
+          <Show when={picker() !== 'closed'}>
+            <Row clickable={() => setPicker('closed')}>
+              <Row.Icon icon="close" />
+              <Row.Title>{i18n('Cancel')}</Row.Title>
             </Row>
           </Show>
         </Section>

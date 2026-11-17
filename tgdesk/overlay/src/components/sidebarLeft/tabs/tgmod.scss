@@ -128,3 +128,25 @@
   color: #fff;
   font-size: .875rem;
 }
+
+.tgmod-decor-picker {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: .5rem;
+  padding: .5rem 1rem;
+  max-height: 22rem;
+  overflow-y: auto;
+}
+
+.tgmod-decor-picker-label {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: .125rem;
+  font-size: .625rem;
+  color: var(--primary-text-color);
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

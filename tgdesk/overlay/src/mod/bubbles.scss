@@ -52,6 +52,11 @@
   &-content {
     position: absolute;
     inset: 22%;
+
+    &.is-gift {
+      inset: 14%;
+    }
+
     display: flex;
     align-items: center;
     justify-content: center;

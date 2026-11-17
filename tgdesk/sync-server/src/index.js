@@ -13,6 +13,24 @@ const MEDIA_PER_USER = 24;
 const TOKEN_TTL = 90 * 24 * 3600;
 const AUTH_TTL = 600;
 const CAPTION_MAX = 70;
+const GIFTS_MAX = 8;
+const NAME_MAX = 64;
+
+// * a gift from Telegram's catalogue worn as decoration: which gift, and for a collectible's look the
+// * model and backdrop by name. Nothing else is taken, so no number, owner or price can be shown.
+function parseGifts(list) {
+  if(list === undefined || list === null) return [];
+  if(!Array.isArray(list) || list.length > GIFTS_MAX) throw new HttpError(400, 'BAD_GIFTS');
+  const name = (value) => {
+    if(value === undefined || value === null || value === '') return null;
+    if(typeof value !== 'string' || value.length > NAME_MAX || /[\u0000-\u001f<>]/.test(value)) throw new HttpError(400, 'BAD_GIFTS');
+    return value;
+  };
+  return list.map((item) => {
+    if(!item || typeof item !== 'object' || typeof item.gift_id !== 'string' || !/^\d{1,20}$/.test(item.gift_id)) throw new HttpError(400, 'BAD_GIFTS');
+    return {gift_id: item.gift_id, model: name(item.model), backdrop: name(item.backdrop)};
+  });
+}
 
 const JSON_HEADERS = {'Content-Type': 'application/json; charset=utf-8'};
 const CORS_HEADERS = {
@@ -154,6 +172,7 @@ function presentProfile(origin, userId, stored) {
     effect: stored.effect ?? null,
     banner: media(stored.banner) ?? null,
     showcase: (stored.showcase || []).map(media),
+    gifts: stored.gifts || [],
     caption: stored.caption ?? null
   };
 }
@@ -257,6 +276,8 @@ route('PUT', /^\/v1\/profiles\/me$/, async(request, env) => {
   const showcase = [];
   for(const id of ids) showcase.push(await resolveOwned(id));
 
+  const gifts = parseGifts(body.gifts);
+
   const previous = await env.TGMOD.get('profile:' + uid, 'json');
   const stored = {
     version: (previous?.version || 0) + 1,
@@ -265,6 +286,7 @@ route('PUT', /^\/v1\/profiles\/me$/, async(request, env) => {
     effect,
     banner,
     showcase,
+    gifts,
     caption: caption?.trim() || null
   };
   await env.TGMOD.put('profile:' + uid, JSON.stringify(stored));

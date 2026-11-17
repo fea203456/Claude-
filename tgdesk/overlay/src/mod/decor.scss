@@ -175,3 +175,53 @@
 .tgmod-header-decor {
   pointer-events: none;
 }
+
+// * a catalogue gift worn as decoration; a collectible's look adds its round backdrop
+.tgmod-gift {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &-sticker {
+    position: relative;
+    width: 82%;
+    height: 82%;
+
+    > * {
+      width: 100% !important;
+      height: 100% !important;
+    }
+
+    canvas,
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+  }
+}
+
+// * says, over the header, that the frame, banner and floating items are the mod's
+.tgmod-header-badge {
+  position: absolute;
+  inset-inline-end: .75rem;
+  top: 3.75rem;
+  z-index: 3;
+  padding: .125rem .5rem;
+  border-radius: 1rem;
+  font-size: .6875rem;
+  font-weight: var(--font-weight-bold);
+  color: #fff;
+  background: rgba(0, 0, 0, .35);
+  backdrop-filter: blur(6px);
+  pointer-events: none;
+  transition: opacity var(--transition-standard-in);
+
+  .profile-container:not(.is-collapsed) & {
+    opacity: 0;
+  }
+}

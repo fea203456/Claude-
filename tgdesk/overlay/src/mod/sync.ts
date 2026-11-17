@@ -17,6 +17,14 @@ export type TgModMedia = {
   url: string
 };
 
+// * a gift from Telegram's catalogue worn as decoration: the gift, and for a collectible's look the model
+// * and backdrop by name. Never a number, an owner or a price.
+export type TgModGiftRef = {
+  gift_id: string,
+  model: string | null,
+  backdrop: string | null
+};
+
 export type TgModRemoteProfile = {
   user_id: number,
   version: number,
@@ -25,6 +33,7 @@ export type TgModRemoteProfile = {
   effect: TgModEffectId | null,
   banner: TgModMedia | null,
   showcase: TgModMedia[],
+  gifts: TgModGiftRef[],
   caption: string | null
 };
 
@@ -33,6 +42,7 @@ export type TgModDraft = {
   effect: TgModEffectId | null,
   banner: string | null,
   showcase: string[],
+  gifts: TgModGiftRef[],
   caption: string | null
 };
 
@@ -125,6 +135,11 @@ function sanitize(profile: TgModRemoteProfile): TgModRemoteProfile {
     effect: profile.effect && isTgModEffect(profile.effect) ? profile.effect : null,
     banner: profile.banner && profile.banner.type !== 'application/x-tgsticker' ? media(profile.banner) : null,
     showcase: (profile.showcase || []).map(media).filter(Boolean).slice(0, 8),
+    gifts: (Array.isArray(profile.gifts) ? profile.gifts : []).filter((g) => g && /^\d{1,20}$/.test(g.gift_id)).slice(0, 8).map((g) => ({
+      gift_id: g.gift_id,
+      model: typeof g.model === 'string' ? g.model.slice(0, 64) : null,
+      backdrop: typeof g.backdrop === 'string' ? g.backdrop.slice(0, 64) : null
+    })),
     caption: typeof profile.caption === 'string' ? profile.caption.slice(0, 70) : null
   };
 }

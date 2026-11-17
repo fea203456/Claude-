@@ -111,7 +111,7 @@ test('a profile is published with own media and read by anyone', async() => {
   const media = await upload.json();
   assert.equal(media.type, 'image/png');
 
-  const put = await call(e, 'PUT', '/v1/profiles/me', {headers: auth, body: {frame: 'neon', effect: 'bubbles', banner: media.id, showcase: [media.id], caption: ' hi '}});
+  const put = await call(e, 'PUT', '/v1/profiles/me', {headers: auth, body: {frame: 'neon', effect: 'bubbles', banner: media.id, showcase: [media.id], gifts: [{gift_id: '5170145012310081615', model: 'Ruby', backdrop: 'Midnight'}, {gift_id: '42'}], caption: ' hi '}});
   assert.equal(put.status, 200);
 
   const profile = await (await call(e, 'GET', '/v1/profiles/42')).json();
@@ -121,6 +121,10 @@ test('a profile is published with own media and read by anyone', async() => {
   assert.equal(profile.caption, 'hi');
   assert.equal(profile.banner.url, 'https://sync.example/v1/media/' + media.id);
   assert.equal(profile.showcase.length, 1);
+  assert.deepEqual(profile.gifts, [
+    {gift_id: '5170145012310081615', model: 'Ruby', backdrop: 'Midnight'},
+    {gift_id: '42', model: null, backdrop: null}
+  ]);
 
   const file = await call(e, 'GET', '/v1/media/' + media.id);
   assert.equal(file.headers.get('Content-Type'), 'image/png');
@@ -141,6 +145,12 @@ test('nobody can publish for someone else or use their files', async() => {
   assert.equal((await call(e, 'PUT', '/v1/profiles/me', {headers: bob, body: {showcase: [media.id]}})).status, 400);
   assert.equal((await call(e, 'PUT', '/v1/profiles/me', {headers: bob, body: {frame: 'not-a-frame'}})).status, 400);
   assert.equal((await call(e, 'PUT', '/v1/profiles/me', {headers: bob, body: {effect: 'fireworks'}})).status, 400);
+  // * gifts are references only: no numbers, owners or prices, and nothing that is not a catalogue id
+  for(const gifts of [[{gift_id: 7}], [{gift_id: 'abc'}], [{gift_id: '1', model: '<b>x</b>'}], Array.from({length: 9}, () => ({gift_id: '1'}))]) {
+    assert.equal((await call(e, 'PUT', '/v1/profiles/me', {headers: bob, body: {gifts}})).status, 400);
+  }
+  const extra = await (await call(e, 'PUT', '/v1/profiles/me', {headers: bob, body: {gifts: [{gift_id: '1', num: 777, owner: 'durov', price: 1e6}]}})).json();
+  assert.deepEqual(extra.gifts, [{gift_id: '1', model: null, backdrop: null}]);
 });
 
 test('only real images, videos and stickers are taken', async() => {

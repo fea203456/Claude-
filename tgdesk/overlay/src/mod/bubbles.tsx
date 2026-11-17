@@ -11,9 +11,11 @@
 
 import {createEffect, For, onCleanup, onMount} from 'solid-js';
 import liteMode from '@helpers/liteMode';
-import type {TgModMedia} from '@/mod/sync';
+import type {TgModGiftRef, TgModMedia} from '@/mod/sync';
 import type {TgModEffectId} from '@/mod/effects';
-import {TgModMediaView} from '@/mod/media';
+import {TgModGiftView, TgModMediaView} from '@/mod/media';
+
+export type TgModFloatingItem = {media: TgModMedia, gift?: undefined} | {gift: TgModGiftRef, media?: undefined};
 import '@/mod/bubbles.scss';
 
 type Body = {
@@ -52,7 +54,7 @@ function isCollapsed(container: HTMLElement) {
   return !!container.closest('.profile-container')?.classList.contains('is-collapsed');
 }
 
-export const TgModHeaderEffect = (props: {effect: TgModEffectId, items: TgModMedia[], container: HTMLElement}) => {
+export const TgModHeaderEffect = (props: {effect: TgModEffectId, items: TgModFloatingItem[], container: HTMLElement}) => {
   let layer!: HTMLDivElement;
   let bodies: Body[] = [];
   let frame = 0;
@@ -270,10 +272,10 @@ export const TgModHeaderEffect = (props: {effect: TgModEffectId, items: TgModMed
 
   return (
     <div ref={layer} class="tgmod-bubbles" aria-hidden="true">
-      <For each={props.items}>{(media) => (
+      <For each={props.items}>{(item) => (
         <div class="tgmod-bubble">
-          <div class="tgmod-bubble-content">
-            <TgModMediaView media={media} size={44} />
+          <div class="tgmod-bubble-content" classList={{'is-gift': !!item.gift}}>
+            {item.gift ? <TgModGiftView gift={item.gift} size={48} /> : <TgModMediaView media={item.media} size={44} />}
           </div>
         </div>
       )}</For>

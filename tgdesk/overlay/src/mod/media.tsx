@@ -3,11 +3,15 @@
  * origin for them), .tgs stickers through tweb's Lottie player.
  */
 
-import {createResource, JSX, onCleanup, onMount, Show} from 'solid-js';
+import {createEffect, createResource, JSX, on, onCleanup, onMount, Show} from 'solid-js';
 import apiManagerProxy from '@lib/apiManagerProxy';
 import lottieLoader from '@lib/lottie/lottieLoader';
 import type LottiePlayer from '@lib/lottie/lottiePlayer';
-import type {TgModMedia} from '@/mod/sync';
+import type {TgModGiftRef, TgModMedia} from '@/mod/sync';
+import wrapSticker from '@components/wrappers/sticker';
+import createMiddleware from '@helpers/solid/createMiddleware';
+import noop from '@helpers/noop';
+import {resolveTgModGift} from '@/mod/gifts';
 
 const TgsView = (props: {url: string, size: number}) => {
   let container!: HTMLDivElement;
@@ -84,3 +88,40 @@ export const TgModMediaView = (props: {media: TgModMedia, size?: number, class?:
   );
 };
 
+
+/**
+ * A gift from Telegram's catalogue shown as decoration: its sticker, on a collectible's backdrop when one
+ * was picked. Only the picture: no number, owner or price is shown or kept.
+ */
+export const TgModGiftView = (props: {gift: TgModGiftRef, size: number}) => {
+  let sticker!: HTMLDivElement;
+  const [look] = createResource(() => props.gift, (gift) => resolveTgModGift(gift).catch((): undefined => undefined));
+
+  createEffect(on(look, (value) => {
+    sticker.replaceChildren();
+    if(!value) return;
+    const middleware = createMiddleware().get();
+    wrapSticker({
+      doc: value.doc,
+      div: sticker,
+      group: 'none',
+      width: props.size,
+      height: props.size,
+      play: true,
+      loop: true,
+      withThumb: true,
+      middleware
+    }).catch(noop);
+  }));
+
+  return (
+    <div
+      class="tgmod-gift"
+      classList={{'has-backdrop': !!look()?.backdrop}}
+      style={look()?.backdrop ? {background: `radial-gradient(circle at 50% 45%, ${look().backdrop.center} 0%, ${look().backdrop.edge} 78%)`} : undefined}
+      title={look()?.title}
+    >
+      <div ref={sticker} class="tgmod-gift-sticker" />
+    </div>
+  );
+};
