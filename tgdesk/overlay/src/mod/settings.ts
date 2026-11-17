@@ -14,7 +14,10 @@ export type TgModSettings = {
   ghostStories: boolean,
   customSound: boolean,
   // * the desktop app only: route Telegram Web through a working Telegram IP
-  unblock: boolean
+  unblock: boolean,
+  // * profile decoration shared between mod users
+  syncUrl: string,
+  showOthers: boolean
 };
 
 export const TGMOD_SETTINGS_INIT: TgModSettings = {
@@ -24,7 +27,9 @@ export const TGMOD_SETTINGS_INIT: TgModSettings = {
   ghostTyping: false,
   ghostStories: false,
   customSound: false,
-  unblock: true
+  unblock: true,
+  syncUrl: '',
+  showOthers: true
 };
 
 /**

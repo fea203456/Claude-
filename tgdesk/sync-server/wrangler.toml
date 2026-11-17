@@ -1,0 +1,18 @@
+name = "tgmod-sync"
+main = "src/index.js"
+compatibility_date = "2026-10-01"
+
+[vars]
+# the bot's username without @, from @BotFather
+BOT_USERNAME = "your_tgmod_bot"
+
+# `npx wrangler kv namespace create TGMOD` prints the id to put here
+[[kv_namespaces]]
+binding = "TGMOD"
+id = "PUT_KV_NAMESPACE_ID_HERE"
+
+# Secrets, set once with `npx wrangler secret put <NAME>`:
+#   BOT_TOKEN       the bot's token from @BotFather
+#   WEBHOOK_SECRET  any long random string
+#   TOKEN_SECRET    any long random string (signs the session tokens)
+#   ADMIN_TOKEN     any long random string (setup and moderation)

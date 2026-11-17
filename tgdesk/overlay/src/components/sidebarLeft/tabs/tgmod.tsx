@@ -14,6 +14,7 @@ import {TGMOD_THEMES, TgModTheme} from '@/mod/themes';
 import {TGMOD_SETTINGS_INIT, TgModSettings} from '@/mod/settings';
 import {getTgModCustomSound, setTgModCustomSound, setTgModCustomSoundEnabled, TGMOD_SOUND_MAX_SIZE} from '@/mod/sound';
 import {getTgModDesktop, TgModUnblockStatus} from '@/mod/desktop';
+import {useSuperTab} from '@components/solidJsTabs/superTabProvider';
 import '@components/sidebarLeft/tabs/tgmod.scss';
 
 const ThemeTile = (props: {theme: TgModTheme, selected: boolean, onClick: () => void}) => {
@@ -49,6 +50,7 @@ const ToggleRow = (props: {
 );
 
 const TgModTab = () => {
+  const [tab] = useSuperTab();
   const [appSettings, setAppSettings] = useAppSettings();
   const mod = (): TgModSettings => appSettings.tgmod ?? TGMOD_SETTINGS_INIT;
   const setMod = <K extends keyof TgModSettings>(key: K, value: TgModSettings[K]) => {
@@ -132,6 +134,13 @@ const TgModTab = () => {
             />
           )}</For>
         </div>
+      </Section>
+
+      <Section name="TgMod.Decor" caption="TgMod.Decor.Caption">
+        <Row clickable={() => import('@components/solidJsTabs/tabs').then(({AppTgModDecorTab}) => tab.slider.createTab(AppTgModDecorTab).open())}>
+          <Row.Icon icon="brush" />
+          <Row.Title>{i18n('TgMod.Decor')}</Row.Title>
+        </Row>
       </Section>
 
       <Section name="TgMod.Ghost" caption="TgMod.Ghost.Caption">

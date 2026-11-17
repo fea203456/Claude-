@@ -1,0 +1,171 @@
+/*
+ * TgMod — profile decoration. The avatar in a collapsed header is a 400px element scaled to 120px
+ * (`_profile.scss`), so the frame's sizes are given at 400px: 10/3 of what is seen.
+ */
+
+.profile-container.is-collapsed .profile-avatars-container.tgmod-has-frame .profile-avatars-avatar.active {
+  box-shadow: var(--tgmod-frame);
+}
+
+:root {
+  .tgmod-frame-neon {
+    --tgmod-frame: 0 0 0 13px #a66bff, 0 0 0 23px rgba(45, 127, 249, .85), 0 0 90px 30px rgba(166, 107, 255, .65);
+  }
+
+  .tgmod-frame-gold {
+    --tgmod-frame: 0 0 0 10px #fff1b8, 0 0 0 23px #e0a526, 0 0 0 30px #9a6a12, 0 0 80px 24px rgba(240, 190, 60, .55);
+  }
+
+  .tgmod-frame-fire {
+    --tgmod-frame: 0 0 0 13px #ffd166, 0 0 0 23px #ff7a1a, 0 0 0 30px #e0301e, 0 0 100px 34px rgba(255, 90, 30, .6);
+  }
+
+  .tgmod-frame-ice {
+    --tgmod-frame: 0 0 0 10px #ffffff, 0 0 0 23px #9be7ff, 0 0 0 30px #4aa8ff, 0 0 90px 30px rgba(120, 210, 255, .6);
+  }
+
+  .tgmod-frame-emerald {
+    --tgmod-frame: 0 0 0 13px #b9ffd9, 0 0 0 23px #19c37d, 0 0 0 30px #0b7a4f, 0 0 80px 24px rgba(25, 195, 125, .5);
+  }
+
+  .tgmod-frame-mono {
+    --tgmod-frame: 0 0 0 10px #ffffff, 0 0 0 20px #111111, 0 0 0 27px #ffffff;
+  }
+
+  .tgmod-frame-sakura {
+    --tgmod-frame: 0 0 0 13px #ffe3ef, 0 0 0 23px #ff8fc0, 0 0 0 30px #e0558f, 0 0 90px 30px rgba(255, 143, 192, .55);
+  }
+}
+
+// * the banner sits behind everything in the header, and only while the avatar is the small circle
+.tgmod-banner {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--transition-standard-in);
+
+  .profile-container.is-collapsed & {
+    opacity: 1;
+  }
+
+  &.is-empty {
+    display: none;
+  }
+
+  &-media {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  &-shade {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(0, 0, 0, .05) 40%, rgba(0, 0, 0, .45) 100%);
+  }
+}
+
+.profile-avatars-container.tgmod-has-banner {
+  > :not(.tgmod-banner) {
+    z-index: 1;
+  }
+}
+
+.tgmod-showcase-section {
+  .tgmod-showcase {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: .5rem;
+    padding: .25rem .75rem .5rem;
+  }
+
+  .tgmod-showcase-item {
+    position: relative;
+    aspect-ratio: 1;
+    border-radius: .75rem;
+    background: var(--light-primary-color);
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    .tgmod-media {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+  }
+
+  .tgmod-showcase-caption {
+    padding: .25rem 1rem .5rem;
+    color: var(--primary-text-color);
+    word-break: break-word;
+  }
+
+  .tgmod-showcase-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .5rem;
+    margin: .25rem 1rem .5rem;
+  }
+
+  .tgmod-showcase-report {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--secondary-text-color);
+    font: inherit;
+    font-size: .75rem;
+    cursor: pointer;
+
+    &:hover {
+      color: var(--danger-color);
+    }
+  }
+
+  .tgmod-showcase-badge {
+    display: inline-flex;
+    padding: .125rem .5rem;
+    border-radius: 1rem;
+    font-size: .75rem;
+    font-weight: var(--font-weight-bold);
+    color: var(--primary-color);
+    background: var(--light-primary-color);
+  }
+}
+
+.tgmod-media-tgs {
+  width: 100%;
+  height: 100%;
+
+  canvas {
+    width: 100% !important;
+    height: 100% !important;
+  }
+}
+
+// * the frame picker: the same 400px circle, shrunk into its tile
+.tgmod-frame-swatch-wrap {
+  position: relative;
+  width: 4.5rem;
+  height: 4.5rem;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tgmod-frame-swatch {
+  flex: none;
+  width: 400px;
+  height: 400px;
+  border-radius: 50%;
+  transform: scale(.13);
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  box-shadow: var(--tgmod-frame);
+}

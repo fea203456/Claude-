@@ -18,7 +18,8 @@ git -C "$tweb" checkout -q --force "$(cat "$here/UPSTREAM_COMMIT")"
 git -C "$tweb" clean -fdq -e node_modules -e .env.local
 "$here/apply.sh" "$tweb"
 
-(cd "$tweb" && pnpm install --frozen-lockfile && pnpm exec vite build)
+# * TGMOD_SYNC_URL: the decoration sync server built in for everyone (see sync-server/README.md)
+(cd "$tweb" && pnpm install --frozen-lockfile && VITE_TGMOD_SYNC_URL="${TGMOD_SYNC_URL:-}" pnpm exec vite build)
 node "$here/scripts/assemble-app.js" "$tweb" "$here/electron/app"
 
 cd "$here/electron"

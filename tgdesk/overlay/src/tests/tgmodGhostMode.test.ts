@@ -14,7 +14,7 @@ function stateManager(tgmod: Partial<TgModSettings>) {
 
 function setupMessages(tgmod: Partial<TgModSettings>) {
   const manager = new AppMessagesManager();
-  const invokeApi = vi.fn(() => deferredPromise<any>());
+  const invokeApi = vi.fn((method: string, params?: any) => deferredPromise<any>());
   const processLocalUpdate = vi.fn();
   Object.assign(manager as any, {
     log: logger('MESSAGES', LogTypes.None),
@@ -60,7 +60,7 @@ describe('TgMod ghost mode', () => {
 
   test('the online status is always sent as offline while it hides it', () => {
     const manager = new AppUsersManager();
-    const invokeApiSingle = vi.fn(() => Promise.resolve(true));
+    const invokeApiSingle = vi.fn((method: string, params?: any) => Promise.resolve(true));
     Object.assign(manager as any, {
       apiManager: {invokeApiSingle},
       appStateManager: stateManager({ghostOnline: true})
