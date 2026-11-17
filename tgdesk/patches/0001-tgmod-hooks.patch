@@ -1,0 +1,268 @@
+diff --git a/scripts/import-graph.budget.json b/scripts/import-graph.budget.json
+index 3e4b55b..aaa6c37 100644
+--- a/scripts/import-graph.budget.json
++++ b/scripts/import-graph.budget.json
+@@ -1,7 +1,7 @@
+ {
+   "largestCycle": 27,
+   "largestStaticCycle": 19,
+-  "reloadPage": 429,
++  "reloadPage": 432,
+   "dirtyPage": 0,
+   "hotInWorkers": 0
+ }
+diff --git a/src/components/sidebarLeft/tabs/settings.tsx b/src/components/sidebarLeft/tabs/settings.tsx
+index f0c17b7..bd0cffd 100644
+--- a/src/components/sidebarLeft/tabs/settings.tsx
++++ b/src/components/sidebarLeft/tabs/settings.tsx
+@@ -445,6 +445,10 @@ const Settings = () => {
+       </Show>
+       <Section>
+         <div class="profile-buttons">
++          <Row clickable={() => import('@components/solidJsTabs/tabs').then(({AppTgModTab}) => tab.slider.createTab(AppTgModTab).open())}>
++            <Row.Icon icon="brush" />
++            <Row.Title>{i18n('TgMod.Settings')}</Row.Title>
++          </Row>
+           <For each={subTabConfigs}>
+             {(item) => (
+               <Row clickable={onSubTabClick(item)}>
+diff --git a/src/components/solidJsTabs/tabs.ts b/src/components/solidJsTabs/tabs.ts
+index b7d2615..390ce82 100644
+--- a/src/components/solidJsTabs/tabs.ts
++++ b/src/components/solidJsTabs/tabs.ts
+@@ -465,6 +465,13 @@ export const AppNewCallTab =
+ (AppNewCallTab as any).noSame = true;
+ 
+ 
++export const AppTgModTab =
++  scaffoldSolidJSTab({
++    title: 'TgMod.Settings',
++    getComponentModule: () => import('../sidebarLeft/tabs/tgmod')
++  });
++
++
+ export const AppPowerSavingTab =
+   scaffoldSolidJSTab({
+     title: 'LiteMode.Title',
+diff --git a/src/config/state.ts b/src/config/state.ts
+index 78c9c84..0221385 100644
+--- a/src/config/state.ts
++++ b/src/config/state.ts
+@@ -1,3 +1,4 @@
++import {TgModSettings, TGMOD_SETTINGS_INIT} from '@/mod/settings';
+ import type {LiteModeKey} from '@helpers/liteMode';
+ import type {AppMediaPlaybackController} from '@components/appMediaPlaybackController';
+ import type {TopPeerType, MyTopPeer} from '@appManagers/appUsersManager';
+@@ -129,6 +130,7 @@ export type StateSettings = {
+   notifyAllAccounts: boolean,
+   tabsInSidebar: boolean,
+   showPeerIds: boolean,
++  tgmod: TgModSettings,
+   /** Ids of the settings-search results picked last, most recent first. */
+   settingsSearchRecent: string[],
+   seenTooltips: {
+@@ -523,7 +525,7 @@ export const SETTINGS_INIT: StateSettings = {
+     makeDefaultAppTheme('tinted'),
+     makeDefaultAppTheme('light')
+   ],
+-  theme: 'system',
++  theme: 'night', // * TgMod: the Neon theme is the default, and it is a night one
+   increaseContrast: false,
+   lastThemeNames: {
+     dark: 'night',
+@@ -567,7 +569,8 @@ export const SETTINGS_INIT: StateSettings = {
+   savedAsForum: false,
+   notifyAllAccounts: true,
+   tabsInSidebar: false,
+-  showPeerIds: false,
++  showPeerIds: true,
++  tgmod: {...TGMOD_SETTINGS_INIT},
+   settingsSearchRecent: [],
+   playbackParams: {
+     volume: 1,
+diff --git a/src/helpers/audioAssetPlayer.ts b/src/helpers/audioAssetPlayer.ts
+index b5ac1bd..c32d9d0 100644
+--- a/src/helpers/audioAssetPlayer.ts
++++ b/src/helpers/audioAssetPlayer.ts
+@@ -2,6 +2,7 @@ import safePlay from '@helpers/dom/safePlay';
+ import {getOverlayRoot} from '@helpers/appWindow';
+ import deepEqual from '@helpers/object/deepEqual';
+ import tsNow from '@helpers/tsNow';
++import {getTgModAssetOverride} from '@/mod/sound';
+ 
+ const ASSETS_PATH = 'assets/audio/';
+ 
+@@ -37,7 +38,7 @@ export default class AudioAssetPlayer<AssetMap extends Record<string, string>> {
+     try {
+       const audio = this.createAudio();
+       audio.autoplay = true;
+-      audio.src = ASSETS_PATH + this.assets[options.name];
++      audio.src = getTgModAssetOverride(this.assets[options.name]) ?? (ASSETS_PATH + this.assets[options.name]);
+       audio.loop = options.loop ?? false;
+       audio.volume = options.volume ?? 1;
+       audio.setAttribute('name', options.name as string);
+diff --git a/src/helpers/themeController.ts b/src/helpers/themeController.ts
+index 8fe1cdb..2b990e6 100644
+--- a/src/helpers/themeController.ts
++++ b/src/helpers/themeController.ts
+@@ -23,6 +23,7 @@ import pause from '@helpers/schedulers/pause';
+ import Transitions, {getTransition} from '@config/transitions';
+ import {dispatchHeavyAnimationEvent} from '@hooks/useHeavyAnimationCheck';
+ import noop from '@helpers/noop';
++import {applyTgModTheme} from '@/mod/themes';
+ 
+ // Hard cap for the theme-switch view transition: how long heavy rendering (videos/stickers/
+ // lottie) stays paused, and the deadline after which a stalled transition is force-finished so
+@@ -359,6 +360,7 @@ export class ThemeController {
+     this.setThemeColor();
+     const theme = this.getTheme();
+     this.applyTheme(theme);
++    applyTgModTheme(this, useAppSettings()[0].tgmod?.theme ?? 'none', isNight);
+ 
+     let style = this.styleElement;
+     if(!style) {
+diff --git a/src/lang.ts b/src/lang.ts
+index 9601966..e2fe051 100644
+--- a/src/lang.ts
++++ b/src/lang.ts
+@@ -1,4 +1,7 @@
++import {tgModLangEn} from '@/mod/lang';
++
+ const lang = {
++  ...tgModLangEn,
+   'Animations': 'Animations',
+   'AttachAlbum': 'Album',
+   'Appearance.Color.Hex': 'HEX',
+diff --git a/src/lib/appManagers/appMessagesManager.ts b/src/lib/appManagers/appMessagesManager.ts
+index af7e961..ca45a16 100644
+--- a/src/lib/appManagers/appMessagesManager.ts
++++ b/src/lib/appManagers/appMessagesManager.ts
+@@ -5,6 +5,7 @@
+  * https://github.com/zhukov/webogram/blob/master/LICENSE
+  */
+ 
++import {getTgModSettingsFromState} from '@/mod/settings';
+ import type {ApiFileManager} from '@appManagers/apiFileManager';
+ import type {MediaSize} from '@helpers/mediaSize';
+ import type {Progress} from '@lib/appDownloadManager';
+@@ -10181,7 +10182,8 @@ export class AppMessagesManager extends AppManager {
+     // user can scroll into messages whose mid <= a previously-read maxId
+     // (e.g. messages loaded later, or scrolling up after a fast jump to bottom).
+     // Without this, the unread counter "freezes" mid-scroll on high-volume chats.
+-    const skipServerCall = historyStorage.triedToReadMaxId >= maxId || !!historyStorage.readPromise;
++    const skipServerCall = getTgModSettingsFromState(this.appStateManager).ghostRead ||
++      historyStorage.triedToReadMaxId >= maxId || !!historyStorage.readPromise;
+ 
+     let apiPromise: Promise<any>;
+     if(monoforumThreadId) {
+@@ -10543,7 +10545,7 @@ export class AppMessagesManager extends AppManager {
+   }
+ 
+   public readMessages(peerId: PeerId, msgIds: number[]) {
+-    if(DO_NOT_READ_HISTORY) {
++    if(DO_NOT_READ_HISTORY || getTgModSettingsFromState(this.appStateManager).ghostRead) {
+       return Promise.resolve();
+     }
+ 
+@@ -15227,6 +15229,10 @@ export class AppMessagesManager extends AppManager {
+     force?: boolean,
+     threadId?: number
+   ): Promise<boolean> {
++    if(getTgModSettingsFromState(this.appStateManager).ghostTyping) {
++      return false;
++    }
++
+     threadId = this.getTypingThreadId(peerId, threadId);
+ 
+     const key = this.getTypingKey(peerId, threadId);
+diff --git a/src/lib/appManagers/appStoriesManager.ts b/src/lib/appManagers/appStoriesManager.ts
+index e6ab5ee..1b9ddda 100644
+--- a/src/lib/appManagers/appStoriesManager.ts
++++ b/src/lib/appManagers/appStoriesManager.ts
+@@ -1,3 +1,4 @@
++import {getTgModSettingsFromState} from '@/mod/settings';
+ import forEachReverse from '@helpers/array/forEachReverse';
+ import indexOfAndSplice from '@helpers/array/indexOfAndSplice';
+ import insertInDescendSortedArray from '@helpers/array/insertInDescendSortedArray';
+@@ -1970,7 +1971,7 @@ export default class AppStoriesManager extends AppManager {
+       max_id: maxId
+     });
+ 
+-    if(TEST_READ) {
++    if(TEST_READ || getTgModSettingsFromState(this.appStateManager).ghostStories) {
+       return;
+     }
+ 
+diff --git a/src/lib/appManagers/appUsersManager.ts b/src/lib/appManagers/appUsersManager.ts
+index 670d479..04535b8 100644
+--- a/src/lib/appManagers/appUsersManager.ts
++++ b/src/lib/appManagers/appUsersManager.ts
+@@ -5,6 +5,7 @@
+  * https://github.com/zhukov/webogram/blob/master/LICENSE
+  */
+ 
++import {getTgModSettingsFromState} from '@/mod/settings';
+ import filterUnique from '@helpers/array/filterUnique';
+ import indexOfAndSplice from '@helpers/array/indexOfAndSplice';
+ import deferredPromise, {CancellablePromise} from '@helpers/cancellablePromise';
+@@ -1535,6 +1536,11 @@ export class AppUsersManager extends AppManager {
+   }
+ 
+   public updateMyOnlineStatus(offline: boolean) {
++    // * TgMod ghost mode: always tell the server we are offline
++    if(getTgModSettingsFromState(this.appStateManager).ghostOnline) {
++      offline = true;
++    }
++
+     // * an account a tab has just switched to may not have loaded itself yet
+     const self = this.getSelf();
+     self && this.setUserStatus(self.id, offline);
+diff --git a/src/lib/langPack.ts b/src/lib/langPack.ts
+index 4270f14..01a2036 100644
+--- a/src/lib/langPack.ts
++++ b/src/lib/langPack.ts
+@@ -1,3 +1,4 @@
++import {getTgModLangStrings} from '@/mod/lang';
+ import type lang from '@/lang';
+ import type langSign from '@/langSign';
+ import langPackLocalVersion from '@/langPackLocalVersion';
+@@ -290,6 +291,10 @@ namespace I18n {
+       if(!TEST_LOCAL) pushLocal();
+       strings = strings.concat(...[langPack1.strings, langPack2.strings].filter(Boolean));
+       if(TEST_LOCAL) pushLocal();
++      for(const string of formatLocalStrings(getTgModLangStrings(langCode))) {
++        (string as LocalLangPackString).local = true;
++        strings.push(string);
++      }
+ 
+       langPack1.strings = strings;
+       langPack1.countries = countries;
+diff --git a/src/lib/settingsSearch/generated.ts b/src/lib/settingsSearch/generated.ts
+index 02c16ac..f98a67c 100644
+--- a/src/lib/settingsSearch/generated.ts
++++ b/src/lib/settingsSearch/generated.ts
+@@ -17,6 +17,7 @@ const generated: GeneratedSettingsSearchData = {
+     {id: 'AppSpeakersAndCameraTab', parentId: 'AppSettingsTab', titleLangKey: 'AccountSettings.SpeakersAndCamera', icon: 'speaker_filled'},
+     {id: 'AppActiveSessionsTab', parentId: 'AppSettingsTab', titleLangKey: 'SessionsTitle', icon: 'devices_filled', aliasLangKeys: ['Devices']},
+     {id: 'AppExperimentalTab', parentId: 'AppSettingsTab', titleLangKey: 'Experimental.Title'},
++    {id: 'AppTgModTab', parentId: 'AppSettingsTab', titleLangKey: 'TgMod.Settings', icon: 'brush'},
+     {id: 'AppLanguageTab', parentId: 'AppSettingsTab', titleLangKey: 'Telegram.LanguageViewController', icon: 'web_filled', aliasLangKeys: ['AccountSettings.Language']},
+     {id: 'AppKeyboardShortcutsTab', parentId: 'AppSettingsTab', titleLangKey: 'KeyboardShortcuts.Title', icon: 'keyboard_filled'},
+     {id: 'AppChatAutomationTab', parentId: 'AppEditProfileTab', titleLangKey: 'ChatAutomation.Title', icon: 'bot_filled', aliasLangKeys: ['ChatAutomation.ManageAutomation', 'ChatAutomation.ProfileLabel']},
+diff --git a/src/lib/uiNotificationsManager.ts b/src/lib/uiNotificationsManager.ts
+index c4e7ccf..7b71684 100644
+--- a/src/lib/uiNotificationsManager.ts
++++ b/src/lib/uiNotificationsManager.ts
+@@ -1,3 +1,4 @@
++import {setTgModCustomSoundEnabled} from '@/mod/sound';
+ import type {PushNotificationObject} from '@lib/serviceWorker/push';
+ import {MOUNT_CLASS_TO} from '@config/debug';
+ import getPeerTitle from '@components/wrappers/getPeerTitle';
+@@ -289,6 +290,7 @@ export class UiNotificationsManager {
+     });
+ 
+     this.appSettings = useAppSettings()[0];
++    createRoot(() => createEffect(() => setTgModCustomSoundEnabled(!!this.appSettings.tgmod?.customSound)));
+ 
+     // * set listeners
+ 

@@ -1,0 +1,42 @@
+{
+  "name": "tgmod-desktop",
+  "productName": "TgMod",
+  "version": "0.1.0",
+  "description": "TgMod — a Telegram client built on Telegram Web K",
+  "license": "GPL-3.0-only",
+  "main": "src/main.js",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "dist:win": "electron-builder --win portable zip --x64",
+    "dist:linux": "electron-builder --linux AppImage --x64"
+  },
+  "devDependencies": {
+    "electron": "45.3.3",
+    "electron-builder": "26.0.12"
+  },
+  "build": {
+    "appId": "org.tgmod.desktop",
+    "productName": "TgMod",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "src/**",
+      "assets/**",
+      "app/**",
+      "package.json"
+    ],
+    "win": {
+      "icon": "assets/icon.ico",
+      "signAndEditExecutable": false
+    },
+    "linux": {
+      "icon": "assets/icon.png",
+      "category": "Network"
+    },
+    "portable": {
+      "artifactName": "TgMod-${version}-portable-x64.exe"
+    }
+  }
+}

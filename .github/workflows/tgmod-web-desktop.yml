@@ -1,0 +1,34 @@
+name: TgMod Desktop (Windows)
+
+# Manual only: run it from the Actions tab once Actions work on this account.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    name: Windows x64
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Enable pnpm.
+        run: corepack enable
+
+      - name: Build.
+        run: tgdesk/build.sh win
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: TgMod-windows-x64
+          path: |
+            tgdesk/electron/release/*.exe
+            tgdesk/electron/release/*.zip
+          retention-days: 14

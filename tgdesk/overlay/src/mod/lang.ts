@@ -1,0 +1,80 @@
+/*
+ * TgMod — the mod's own strings. English is merged into tweb's local pack (`src/lang.ts`),
+ * Russian is added on top of the server pack when Russian is the interface language.
+ */
+
+export const tgModLangEn = {
+  'TgMod.Title': 'TgMod',
+  'TgMod.Settings': 'Mod Settings',
+  'TgMod.Themes': 'Themes',
+  'TgMod.Themes.Caption': 'Dark themes switch the app to night mode, light ones to day mode.',
+  'TgMod.Theme.none': 'Standard',
+  'TgMod.Theme.neon': 'Neon',
+  'TgMod.Theme.amoled': 'AMOLED',
+  'TgMod.Theme.glass': 'Glass',
+  'TgMod.Theme.sunset': 'Sunset',
+  'TgMod.Theme.mint': 'Mint',
+  'TgMod.Ghost': 'Ghost Mode',
+  'TgMod.Ghost.Caption': 'Sending a message, a reaction or a call still shows that you are around. Unread counters may come back after the next sync.',
+  'TgMod.Ghost.Online': 'Hide online status',
+  'TgMod.Ghost.Read': 'Do not send read receipts',
+  'TgMod.Ghost.Typing': 'Hide "typing…"',
+  'TgMod.Ghost.Stories': 'View stories anonymously',
+  'TgMod.Profile': 'Profile',
+  'TgMod.ShowPeerId': 'Show ID in profiles',
+  'TgMod.Sound': 'Notification Sound',
+  'TgMod.Sound.Custom': 'Use my own sound',
+  'TgMod.Sound.Choose': 'Choose a sound file',
+  'TgMod.Sound.Test': 'Play',
+  'TgMod.Sound.Caption': 'MP3, OGG or WAV up to 1 MB. It is kept on this device only.',
+  'TgMod.Sound.TooBig': 'The file is larger than 1 MB.',
+  'TgMod.Network': 'Connection',
+  'TgMod.Unblock': 'Bypass blocking',
+  'TgMod.Unblock.Caption': 'The desktop app looks for a Telegram server address that answers from your network and connects to it directly. No proxy or VPN is used. Applies after a restart.',
+  'TgMod.Unblock.Status.Off': 'Off',
+  'TgMod.Unblock.Status.Direct': 'Not needed — direct connection works',
+  'TgMod.Unblock.Status.Mapped': 'Using %s',
+  'TgMod.Unblock.Status.Failed': 'No working address found',
+  'TgMod.Unblock.Rescan': 'Search again',
+  'TgMod.Restart': 'Restart now'
+};
+
+export const tgModLangRu: {[key in keyof typeof tgModLangEn]: string} = {
+  'TgMod.Title': 'TgMod',
+  'TgMod.Settings': 'Настройки мода',
+  'TgMod.Themes': 'Темы',
+  'TgMod.Themes.Caption': 'Тёмные темы включают ночной режим, светлые — дневной.',
+  'TgMod.Theme.none': 'Стандартная',
+  'TgMod.Theme.neon': 'Неон',
+  'TgMod.Theme.amoled': 'AMOLED',
+  'TgMod.Theme.glass': 'Стекло',
+  'TgMod.Theme.sunset': 'Закат',
+  'TgMod.Theme.mint': 'Мята',
+  'TgMod.Ghost': 'Режим призрака',
+  'TgMod.Ghost.Caption': 'Отправка сообщения, реакция или звонок всё равно выдают присутствие. Счётчики непрочитанного могут вернуться после следующей синхронизации.',
+  'TgMod.Ghost.Online': 'Скрывать «в сети»',
+  'TgMod.Ghost.Read': 'Не отправлять отметки о прочтении',
+  'TgMod.Ghost.Typing': 'Скрывать «печатает…»',
+  'TgMod.Ghost.Stories': 'Смотреть истории анонимно',
+  'TgMod.Profile': 'Профиль',
+  'TgMod.ShowPeerId': 'Показывать ID в профилях',
+  'TgMod.Sound': 'Звук уведомлений',
+  'TgMod.Sound.Custom': 'Свой звук',
+  'TgMod.Sound.Choose': 'Выбрать файл',
+  'TgMod.Sound.Test': 'Прослушать',
+  'TgMod.Sound.Caption': 'MP3, OGG или WAV до 1 МБ. Хранится только на этом устройстве.',
+  'TgMod.Sound.TooBig': 'Файл больше 1 МБ.',
+  'TgMod.Network': 'Подключение',
+  'TgMod.Unblock': 'Обход блокировок',
+  'TgMod.Unblock.Caption': 'Приложение ищет адрес сервера Telegram, который отвечает из вашей сети, и подключается к нему напрямую. Прокси и VPN не используются. Применяется после перезапуска.',
+  'TgMod.Unblock.Status.Off': 'Выключено',
+  'TgMod.Unblock.Status.Direct': 'Не нужен — прямое подключение работает',
+  'TgMod.Unblock.Status.Mapped': 'Используется %s',
+  'TgMod.Unblock.Status.Failed': 'Рабочий адрес не найден',
+  'TgMod.Unblock.Rescan': 'Искать заново',
+  'TgMod.Restart': 'Перезапустить'
+};
+
+export function getTgModLangStrings(langCode: string): Record<string, string> {
+  return langCode?.toLowerCase().startsWith('ru') ? tgModLangRu : {};
+}
