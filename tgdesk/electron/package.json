@@ -1,8 +1,8 @@
 {
   "name": "tgmod-desktop",
   "productName": "TgMod",
-  "version": "0.2.0",
-  "description": "TgMod — a Telegram client built on Telegram Web K",
+  "version": "0.3.0",
+  "description": "TgMod \u2014 a Telegram client built on Telegram Web K",
   "license": "GPL-3.0-only",
   "main": "src/main.js",
   "private": true,

@@ -6,6 +6,7 @@
 // learns the sender's real user id from the update. Only then does the client get a session token.
 
 const FRAMES = ['neon', 'gold', 'fire', 'ice', 'emerald', 'mono', 'sakura'];
+const EFFECTS = ['bubbles', 'orbit'];
 const SHOWCASE_MAX = 8;
 const MEDIA_MAX_BYTES = 2 * 1024 * 1024;
 const MEDIA_PER_USER = 24;
@@ -150,6 +151,7 @@ function presentProfile(origin, userId, stored) {
     updated_at: stored.updated_at,
     label: 'TgMod',
     frame: stored.frame ?? null,
+    effect: stored.effect ?? null,
     banner: media(stored.banner) ?? null,
     showcase: (stored.showcase || []).map(media),
     caption: stored.caption ?? null
@@ -235,6 +237,9 @@ route('PUT', /^\/v1\/profiles\/me$/, async(request, env) => {
   const frame = body.frame ?? null;
   if(frame !== null && !FRAMES.includes(frame)) throw new HttpError(400, 'BAD_FRAME');
 
+  const effect = body.effect ?? null;
+  if(effect !== null && !EFFECTS.includes(effect)) throw new HttpError(400, 'BAD_EFFECT');
+
   const caption = body.caption ?? null;
   if(caption !== null && (typeof caption !== 'string' || caption.length > CAPTION_MAX)) throw new HttpError(400, 'BAD_CAPTION');
 
@@ -257,6 +262,7 @@ route('PUT', /^\/v1\/profiles\/me$/, async(request, env) => {
     version: (previous?.version || 0) + 1,
     updated_at: new Date().toISOString(),
     frame,
+    effect,
     banner,
     showcase,
     caption: caption?.trim() || null

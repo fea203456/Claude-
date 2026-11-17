@@ -111,11 +111,12 @@ test('a profile is published with own media and read by anyone', async() => {
   const media = await upload.json();
   assert.equal(media.type, 'image/png');
 
-  const put = await call(e, 'PUT', '/v1/profiles/me', {headers: auth, body: {frame: 'neon', banner: media.id, showcase: [media.id], caption: ' hi '}});
+  const put = await call(e, 'PUT', '/v1/profiles/me', {headers: auth, body: {frame: 'neon', effect: 'bubbles', banner: media.id, showcase: [media.id], caption: ' hi '}});
   assert.equal(put.status, 200);
 
   const profile = await (await call(e, 'GET', '/v1/profiles/42')).json();
   assert.equal(profile.frame, 'neon');
+  assert.equal(profile.effect, 'bubbles');
   assert.equal(profile.label, 'TgMod');
   assert.equal(profile.caption, 'hi');
   assert.equal(profile.banner.url, 'https://sync.example/v1/media/' + media.id);
@@ -139,6 +140,7 @@ test('nobody can publish for someone else or use their files', async() => {
   assert.equal((await call(e, 'PUT', '/v1/profiles/me', {headers: {Authorization: 'Bearer x.y'}, body: {frame: 'gold'}})).status, 401);
   assert.equal((await call(e, 'PUT', '/v1/profiles/me', {headers: bob, body: {showcase: [media.id]}})).status, 400);
   assert.equal((await call(e, 'PUT', '/v1/profiles/me', {headers: bob, body: {frame: 'not-a-frame'}})).status, 400);
+  assert.equal((await call(e, 'PUT', '/v1/profiles/me', {headers: bob, body: {effect: 'fireworks'}})).status, 400);
 });
 
 test('only real images, videos and stickers are taken', async() => {

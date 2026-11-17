@@ -8,6 +8,7 @@ import {bindManagersToSession} from '@lib/accounts/bindManagersToAccount';
 import {appSettings} from '@stores/appSettings';
 import {TGMOD_SETTINGS_INIT} from '@/mod/settings';
 import {isTgModFrame, TgModFrameId} from '@/mod/frames';
+import {isTgModEffect, TgModEffectId} from '@/mod/effects';
 import pause from '@helpers/schedulers/pause';
 
 export type TgModMedia = {
@@ -21,6 +22,7 @@ export type TgModRemoteProfile = {
   version: number,
   label: 'TgMod',
   frame: TgModFrameId | null,
+  effect: TgModEffectId | null,
   banner: TgModMedia | null,
   showcase: TgModMedia[],
   caption: string | null
@@ -28,6 +30,7 @@ export type TgModRemoteProfile = {
 
 export type TgModDraft = {
   frame: TgModFrameId | null,
+  effect: TgModEffectId | null,
   banner: string | null,
   showcase: string[],
   caption: string | null
@@ -119,6 +122,7 @@ function sanitize(profile: TgModRemoteProfile): TgModRemoteProfile {
   return {
     ...profile,
     frame: profile.frame && isTgModFrame(profile.frame) ? profile.frame : null,
+    effect: profile.effect && isTgModEffect(profile.effect) ? profile.effect : null,
     banner: profile.banner && profile.banner.type !== 'application/x-tgsticker' ? media(profile.banner) : null,
     showcase: (profile.showcase || []).map(media).filter(Boolean).slice(0, 8),
     caption: typeof profile.caption === 'string' ? profile.caption.slice(0, 70) : null

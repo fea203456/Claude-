@@ -1,0 +1,89 @@
+// TgMod — the floating showcase in the profile header (`bubbles.tsx`)
+
+.tgmod-bubbles {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  overflow: hidden;
+  pointer-events: none;
+  transition: opacity var(--transition-standard-in);
+
+  &.is-hidden {
+    opacity: 0;
+
+    .tgmod-bubble {
+      pointer-events: none;
+    }
+  }
+}
+
+.tgmod-bubble {
+  position: absolute;
+  top: 0;
+  left: 0;
+  border-radius: 50%;
+  pointer-events: auto;
+  cursor: pointer;
+  will-change: transform;
+  transform-origin: 50% 50%;
+
+  // * the film: a bright rim, a faint body and a window of light at the top left
+  background:
+    radial-gradient(circle at 32% 26%, rgba(255, 255, 255, .75) 0, rgba(255, 255, 255, .2) 9%, transparent 20%),
+    radial-gradient(circle at 70% 78%, rgba(255, 255, 255, .25) 0, transparent 14%),
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, .03) 55%, rgba(190, 220, 255, .16) 72%, rgba(255, 255, 255, .42) 98%, rgba(255, 255, 255, .1) 100%);
+  box-shadow:
+    inset 0 0 6px rgba(255, 255, 255, .25),
+    inset -4px -6px 12px rgba(140, 170, 255, .16),
+    0 4px 14px rgba(0, 0, 0, .18);
+
+  // * the colours of a soap film, turning slowly
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: conic-gradient(from 0deg, rgba(255, 120, 200, .22), rgba(120, 220, 255, .2), rgba(255, 240, 140, .18), rgba(160, 255, 190, .18), rgba(255, 120, 200, .22));
+    mask: radial-gradient(circle, transparent 62%, #000 74%);
+    mix-blend-mode: screen;
+    animation: tgmod-bubble-film 9s linear infinite;
+  }
+
+  &-content {
+    position: absolute;
+    inset: 22%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    .tgmod-media {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+  }
+}
+
+.tgmod-bubbles.is-orbit .tgmod-bubble {
+  background: none;
+  box-shadow: none;
+
+  &::after {
+    display: none;
+  }
+
+  .tgmod-bubble-content {
+    inset: 8%;
+    filter: drop-shadow(0 3px 8px rgba(0, 0, 0, .35));
+  }
+}
+
+@keyframes tgmod-bubble-film {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tgmod-bubble::after {
+    animation: none;
+  }
+}

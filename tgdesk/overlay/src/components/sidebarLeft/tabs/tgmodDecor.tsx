@@ -17,6 +17,7 @@ import rootScope from '@lib/rootScope';
 import {useAppSettings} from '@stores/appSettings';
 import {TGMOD_SETTINGS_INIT} from '@/mod/settings';
 import {TGMOD_FRAMES, TgModFrameId} from '@/mod/frames';
+import {TGMOD_EFFECTS, TgModEffectId} from '@/mod/effects';
 import {
   clearTgModProfile,
   getTgModProfile,
@@ -49,6 +50,7 @@ const TgModDecorTab = () => {
   const [busy, setBusy] = createSignal(false);
 
   const [frame, setFrame] = createSignal<TgModFrameId | null>(null);
+  const [effect, setEffect] = createSignal<TgModEffectId | null>('bubbles');
   const [banner, setBanner] = createSignal<TgModMedia | null>(null);
   const [showcase, setShowcase] = createSignal<TgModMedia[]>([]);
   let captionField: InputField;
@@ -57,6 +59,7 @@ const TgModDecorTab = () => {
     if(!getTgModSyncUrl()) return;
     const profile = await getTgModProfile(rootScope.myId.toUserId(), true);
     setFrame(profile?.frame ?? null);
+    if(profile) setEffect(profile.effect ?? null);
     setBanner(profile?.banner ?? null);
     setShowcase(profile?.showcase ?? []);
     if(captionField) captionField.value = profile?.caption ?? '';
@@ -131,6 +134,7 @@ const TgModDecorTab = () => {
     try {
       await publishTgModProfile({
         frame: frame(),
+        effect: effect(),
         banner: banner()?.id ?? null,
         showcase: showcase().map((m) => m.id),
         caption: captionField?.value.trim() || null
@@ -223,6 +227,15 @@ const TgModDecorTab = () => {
               </button>
             )}</For>
           </div>
+        </Section>
+
+        <Section name="TgMod.Decor.Effect" caption="TgMod.Decor.Effect.Caption">
+          <For each={[null, ...TGMOD_EFFECTS] as (TgModEffectId | null)[]}>{(id) => (
+            <Row clickable={() => setEffect(id)}>
+              <Row.Icon icon={effect() === id ? 'check' : 'animations'} />
+              <Row.Title>{i18n(('TgMod.Effect.' + (id ?? 'none')) as LangPackKey)}</Row.Title>
+            </Row>
+          )}</For>
         </Section>
 
         <Section name="TgMod.Decor.Banner">

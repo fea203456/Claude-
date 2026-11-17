@@ -169,3 +169,9 @@
   background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
   box-shadow: var(--tgmod-frame);
 }
+
+// * holds the banner and the floating showcase; no stacking context of its own, so the banner can go
+// * under the avatar and the bubbles over it
+.tgmod-header-decor {
+  pointer-events: none;
+}
