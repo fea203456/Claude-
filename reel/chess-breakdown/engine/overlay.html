@@ -104,7 +104,7 @@ function cardHTML(e,t){
   if(e.type==="intro"){label=`<span class="dot"></span>Шахматный разбор №${S.number}`;}
   else if(e.type==="start"){label=`Шахматный разбор №${S.number}`;badge=`<div class="badge light">▶&nbsp;Партия началась</div>`;}
   else if(e.type==="fact"){label="Факт";}
-  else {label=`Ход ${e.n} · ${esc(sideName(e.side))}`;const g=e.type==="mate"?"mate":e.grade;badge=`<div class="badge">${ic(g)}${G[g][0]}</div>`;}
+  else {label=`Ход ${e.n} · ${esc(e.who||sideName(e.side))}${e.who?" · "+(e.side==="white"?"белые":"чёрные"):""}`;const g=e.type==="mate"?"mate":e.grade;badge=`<div class="badge">${ic(g)}${G[g][0]}</div>`;}
   const n=Math.floor(Math.max(0,t-e.t-0.3)*45), txt=e.text||"";
   const shown=txt.slice(0,n), rest=txt.slice(n);
   const better=e.better&&n>=txt.length?`<div class="better">Лучше было: <b>${esc(e.better)}</b></div>`:(e.better?`<div class="better" style="opacity:0">Лучше было: <b>${esc(e.better)}</b></div>`:"");
@@ -142,7 +142,7 @@ window.renderAt=(out)=>{
   const pop=$("popup"); let pe=null;
   if(!teaser) for(const e of moves){ if(e.popup_t!=null&&src>=e.popup_t&&src<e.popup_t+1.9)pe=e; }
   if(pe&&!summary){ const a=src-pe.popup_t, inK=ease(a/0.25), outK=clamp((1.9-a)/0.3); const g=pe.type==="mate"?"mate":pe.grade;
-    pop.innerHTML=`${ic(g)}<div><div class="pt">${G[g][0]}</div><div class="ps">${pe.type==="mate"?esc(sideName(pe.side))+" ставит мат":esc(pe.title)}</div></div>`;
+    pop.innerHTML=`${ic(g)}<div><div class="pt">${G[g][0]}</div><div class="ps">${pe.type==="mate"?esc(pe.who||sideName(pe.side))+" ставит мат":esc(pe.title)}</div></div>`;
     pop.style.opacity=r2(Math.min(inK,outK)); const sc=r2(0.9+0.1*inK);
     pop.style.visibility="hidden"; pop.style.transform="none"; const w0=pop.offsetWidth,h0=pop.offsetHeight; pop.style.visibility="visible";
     pop.style.transform=`translate(${Math.round((1080-w0)/2)}px,${Math.round(VIDEO.top+VIDEO.h/2-h0/2)}px) scale(${sc})`;
