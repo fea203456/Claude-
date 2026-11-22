@@ -1,0 +1,16 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="fonts.css">
+<style>html,body{margin:0;background:#000}canvas{display:block}</style></head><body><canvas id="c" width="1080" height="1920"></canvas>
+<script src="core.js"></script><script src="paper.js"></script><script src="puppet.js"></script>
+<script>
+const cv = document.getElementById('c'), ctx = cv.getContext('2d');
+window.ready = (async () => { await Promise.all(['900 40px "Playfair Display"','40px "IM Fell"'].map(f => document.fonts.load(f, 'АБВ abc'))); })();
+window.test = (which) => {
+  ctx.fillStyle = '#c9a77a'; ctx.fillRect(0, 0, W, H);
+  const bg = card(0, 0, W, H, 1, g => piece(g, rect(20, 20, W - 40, H - 40), '#d8bf95', { lw: 0, edge: false, rough: 3 }));
+  drawCard(ctx, bg);
+  const ids = ['V', 'L', 'M', 'J', 'G', 'B', 'N', 'R', 'P', 'K', 'C'];
+  ids.forEach((id, i) => { const col = i % 4, row = Math.floor(i / 4); drawPuppet(ctx, id, { x: 150 + col * 260, y: 560 + row * 640, s: .78, face: { mouth: ['smirk','smile','grin','frown','flat','o','talk','shout','smirk','grin','frown'][i], open: .5 }, armN: [20 + i * 10, 20], armF: [-10, 10], legN: [8, -4], legF: [-8, 4] }); });
+  // big head close-up of Voltaire
+  ctx.save(); ctx.translate(850, 1820); drawPuppet(ctx, 'V', { s: 1.3, face: { mouth: 'grin', squint: .4, look: [1, .2] }, armN: [120, 40], armF: [-6, 4], propN: (g) => { g.rotate(2.6); drawQuill(g, .8); } }, 0, 3); ctx.restore();
+};
+</script></body></html>

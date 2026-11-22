@@ -1,0 +1,6 @@
+build/
+voice/*.src.wav
+!voice/vo2_31_puck.src.wav
+voice/ph/
+out/mix.wav
+out/draft*.mp4
